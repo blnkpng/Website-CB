@@ -1,4 +1,4 @@
-const CACHE_NAME = "cabe-bisnis-input-zoom-lock-all-final-v1";
+const CACHE_NAME = "cabe-bisnis-stok-opname-harga-kg-v3";
 const ASSETS = [
   "./",
   "index.html",

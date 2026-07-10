@@ -152,6 +152,16 @@ function bindMultiItems() {
 }
 
 function navigate(route) {
+  const fabNav = document.querySelector(".mobile-fab-nav");
+  const fabToggle = document.getElementById("mobileFabToggle");
+  if (fabNav && fabToggle) {
+    fabNav.classList.remove("open");
+    fabToggle.setAttribute("aria-expanded", "false");
+    fabNav.querySelector(".fab-menu")?.setAttribute("aria-hidden", "true");
+    fabNav.querySelectorAll("button").forEach(button => button.blur());
+  }
+  if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+
   state.route = route;
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
   document.getElementById(`page-${route}`)?.classList.add("active");
@@ -165,6 +175,7 @@ function navigate(route) {
     masuk: "Barang Masuk",
     terjual: "Barang Terjual",
     stok: "Stok Barang",
+    opname: "Stok Opname",
     hutang: "Hutang Supplier",
     cashflow: "Cashflow",
     nota: "Nota Penjualan"
