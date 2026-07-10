@@ -1903,3 +1903,246 @@ body.pin-locked .app-shell{
   .pin-card{padding:22px;border-radius:24px}
   .pin-card h2{font-size:26px}
 }
+
+/* =====================================================
+   MOBILE ASSISTIVE NAV — draggable, edge snapping, idle fade
+   ===================================================== */
+@media (max-width: 820px){
+  .mobile-fab-nav,
+  .mobile-fab-nav.fab-near-content,
+  .mobile-fab-nav.fab-near-content.open{
+    position:fixed !important;
+    inset:0 !important;
+    top:0 !important;
+    right:auto !important;
+    bottom:auto !important;
+    left:0 !important;
+    width:100vw !important;
+    height:100dvh !important;
+    min-height:100vh !important;
+    display:block !important;
+    z-index:120 !important;
+    pointer-events:none !important;
+    overflow:visible !important;
+  }
+
+  .mobile-fab-nav .fab-main{
+    position:absolute !important;
+    left:0 !important;
+    top:0 !important;
+    right:auto !important;
+    bottom:auto !important;
+    width:58px !important;
+    height:58px !important;
+    padding:0 !important;
+    border:1px solid rgba(255,255,255,.30) !important;
+    border-radius:999px !important;
+    background:rgba(31,41,55,.82) !important;
+    color:#fff !important;
+    display:grid !important;
+    place-items:center !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+    touch-action:none !important;
+    user-select:none !important;
+    -webkit-user-select:none !important;
+    -webkit-tap-highlight-color:transparent !important;
+    backdrop-filter:blur(14px) saturate(145%) !important;
+    -webkit-backdrop-filter:blur(14px) saturate(145%) !important;
+    box-shadow:0 14px 34px rgba(15,23,42,.30), inset 0 0 0 1px rgba(255,255,255,.10) !important;
+    transform:translate3d(var(--assistive-x, calc(100vw - 72px)), var(--assistive-y, 62vh), 0) !important;
+    transition:opacity .36s ease, transform .20s ease, background .20s ease, box-shadow .20s ease !important;
+    will-change:transform, opacity !important;
+    z-index:3 !important;
+    cursor:grab !important;
+  }
+
+  .mobile-fab-nav .fab-main:active,
+  .mobile-fab-nav.dragging .fab-main{
+    cursor:grabbing !important;
+    opacity:1 !important;
+    background:rgba(31,41,55,.94) !important;
+    transform:translate3d(var(--assistive-x), var(--assistive-y), 0) scale(1.06) !important;
+    transition:none !important;
+  }
+
+  .mobile-fab-nav.idle:not(.open):not(.dragging) .fab-main{
+    opacity:.36 !important;
+    transform:translate3d(var(--assistive-x), var(--assistive-y), 0) scale(.92) !important;
+    box-shadow:0 8px 18px rgba(15,23,42,.18), inset 0 0 0 1px rgba(255,255,255,.08) !important;
+  }
+
+  .mobile-fab-nav.idle:not(.open):not(.dragging) .fab-main:hover,
+  .mobile-fab-nav.idle:not(.open):not(.dragging) .fab-main:focus-visible{
+    opacity:1 !important;
+  }
+
+  .mobile-fab-nav.open .fab-main{
+    opacity:0 !important;
+    pointer-events:none !important;
+    transform:translate3d(var(--assistive-x), var(--assistive-y), 0) scale(.76) !important;
+  }
+
+  .mobile-fab-nav .fab-main-icon{
+    width:36px !important;
+    height:36px !important;
+    transform:none !important;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.18)) !important;
+  }
+
+  .mobile-fab-nav.open .fab-main-icon{
+    transform:none !important;
+  }
+
+  .mobile-fab-nav .fab-menu{
+    position:absolute !important;
+    left:var(--assistive-menu-x, 12px) !important;
+    top:var(--assistive-menu-y, 120px) !important;
+    right:auto !important;
+    bottom:auto !important;
+    width:min(300px, calc(100vw - 24px)) !important;
+    height:auto !important;
+    min-height:310px !important;
+    max-height:calc(100dvh - 24px) !important;
+    padding:16px !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    border-radius:34px !important;
+    background:rgba(42,46,53,.94) !important;
+    color:#fff !important;
+    display:grid !important;
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+    grid-auto-rows:minmax(82px, 1fr) !important;
+    align-items:center !important;
+    justify-items:stretch !important;
+    gap:4px !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+    overflow:auto !important;
+    overscroll-behavior:contain !important;
+    backdrop-filter:blur(24px) saturate(130%) !important;
+    -webkit-backdrop-filter:blur(24px) saturate(130%) !important;
+    box-shadow:0 24px 58px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.08) !important;
+    transform:scale(.88) !important;
+    transform-origin:var(--assistive-origin-x, 100%) var(--assistive-origin-y, 50%) !important;
+    transition:opacity .20s ease, transform .24s cubic-bezier(.2,.82,.2,1), visibility .20s ease !important;
+    z-index:4 !important;
+  }
+
+  .mobile-fab-nav.open .fab-menu{
+    opacity:1 !important;
+    visibility:visible !important;
+    pointer-events:auto !important;
+    transform:scale(1) !important;
+  }
+
+  .mobile-fab-nav .fab-link,
+  .mobile-fab-nav.open .fab-link{
+    position:relative !important;
+    inset:auto !important;
+    width:100% !important;
+    min-width:0 !important;
+    height:82px !important;
+    padding:7px 3px !important;
+    margin:0 !important;
+    border:0 !important;
+    border-radius:22px !important;
+    background:transparent !important;
+    color:#fff !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:7px !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+    transform:none !important;
+    transition:background .16s ease, transform .16s ease !important;
+    -webkit-tap-highlight-color:transparent !important;
+  }
+
+  .mobile-fab-nav .fab-link:active{
+    background:rgba(255,255,255,.08) !important;
+    transform:scale(.94) !important;
+  }
+
+  .mobile-fab-nav .fab-bubble{
+    width:47px !important;
+    height:47px !important;
+    border-radius:17px !important;
+    background:rgba(255,255,255,.09) !important;
+    color:#fff !important;
+    display:grid !important;
+    place-items:center !important;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06) !important;
+    transition:background .16s ease, transform .16s ease, box-shadow .16s ease !important;
+  }
+
+  .mobile-fab-nav .fab-icon{
+    width:25px !important;
+    height:25px !important;
+  }
+
+  .mobile-fab-nav .fab-link b,
+  .mobile-fab-nav.open .fab-link b{
+    display:block !important;
+    width:100% !important;
+    max-width:86px !important;
+    min-height:16px !important;
+    margin:0 !important;
+    color:rgba(255,255,255,.92) !important;
+    font-size:12px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:-.15px !important;
+    text-align:center !important;
+    text-shadow:none !important;
+    opacity:1 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+
+  .mobile-fab-nav .fab-link.active .fab-bubble{
+    background:linear-gradient(145deg, #2563eb, #144ca9) !important;
+    color:#fff !important;
+    box-shadow:0 9px 22px rgba(37,99,235,.38), inset 0 0 0 1px rgba(255,255,255,.16) !important;
+  }
+
+  .mobile-fab-nav .fab-link.active b{
+    color:#fff !important;
+    font-weight:850 !important;
+  }
+}
+
+@media (max-width: 390px){
+  .mobile-fab-nav .fab-main{
+    width:56px !important;
+    height:56px !important;
+  }
+  .mobile-fab-nav .fab-menu{
+    width:min(286px, calc(100vw - 20px)) !important;
+    min-height:294px !important;
+    padding:13px !important;
+    border-radius:31px !important;
+    grid-auto-rows:minmax(78px, 1fr) !important;
+  }
+  .mobile-fab-nav .fab-link,
+  .mobile-fab-nav.open .fab-link{
+    height:78px !important;
+  }
+  .mobile-fab-nav .fab-bubble{
+    width:44px !important;
+    height:44px !important;
+    border-radius:16px !important;
+  }
+  .mobile-fab-nav .fab-icon{
+    width:23px !important;
+    height:23px !important;
+  }
+  .mobile-fab-nav .fab-link b,
+  .mobile-fab-nav.open .fab-link b{
+    font-size:11.5px !important;
+  }
+}
+

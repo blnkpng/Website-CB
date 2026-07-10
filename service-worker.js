@@ -1,4 +1,4 @@
-const CACHE_NAME = "cabe-bisnis-stok-opname-harga-kg-v3";
+const CACHE_NAME = "cabe-bisnis-assistive-nav-v1-center-panel-v2";
 const ASSETS = [
   "./",
   "index.html",

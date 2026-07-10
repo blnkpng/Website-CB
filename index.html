@@ -3298,6 +3298,250 @@ input[type="date"]::-webkit-datetime-edit-year-field{
 .opname-summary small{color:#64748b}
 .opname-summary #opnameNilaiSelisih{margin-top:4px;font-weight:800;color:#344054}
 .opname-field-note{color:#64748b;font-size:12px;font-weight:600;line-height:1.45}
+
+
+/* =====================================================
+   MOBILE ASSISTIVE NAV — draggable, edge snapping, idle fade
+   ===================================================== */
+@media (max-width: 820px){
+  .mobile-fab-nav,
+  .mobile-fab-nav.fab-near-content,
+  .mobile-fab-nav.fab-near-content.open{
+    position:fixed !important;
+    inset:0 !important;
+    top:0 !important;
+    right:auto !important;
+    bottom:auto !important;
+    left:0 !important;
+    width:100vw !important;
+    height:100dvh !important;
+    min-height:100vh !important;
+    display:block !important;
+    z-index:120 !important;
+    pointer-events:none !important;
+    overflow:visible !important;
+  }
+
+  .mobile-fab-nav .fab-main{
+    position:absolute !important;
+    left:0 !important;
+    top:0 !important;
+    right:auto !important;
+    bottom:auto !important;
+    width:58px !important;
+    height:58px !important;
+    padding:0 !important;
+    border:1px solid rgba(255,255,255,.30) !important;
+    border-radius:999px !important;
+    background:rgba(31,41,55,.82) !important;
+    color:#fff !important;
+    display:grid !important;
+    place-items:center !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+    touch-action:none !important;
+    user-select:none !important;
+    -webkit-user-select:none !important;
+    -webkit-tap-highlight-color:transparent !important;
+    backdrop-filter:blur(14px) saturate(145%) !important;
+    -webkit-backdrop-filter:blur(14px) saturate(145%) !important;
+    box-shadow:0 14px 34px rgba(15,23,42,.30), inset 0 0 0 1px rgba(255,255,255,.10) !important;
+    transform:translate3d(var(--assistive-x, calc(100vw - 72px)), var(--assistive-y, 62vh), 0) !important;
+    transition:opacity .36s ease, transform .20s ease, background .20s ease, box-shadow .20s ease !important;
+    will-change:transform, opacity !important;
+    z-index:3 !important;
+    cursor:grab !important;
+  }
+
+  .mobile-fab-nav .fab-main:active,
+  .mobile-fab-nav.dragging .fab-main{
+    cursor:grabbing !important;
+    opacity:1 !important;
+    background:rgba(31,41,55,.94) !important;
+    transform:translate3d(var(--assistive-x), var(--assistive-y), 0) scale(1.06) !important;
+    transition:none !important;
+  }
+
+  .mobile-fab-nav.idle:not(.open):not(.dragging) .fab-main{
+    opacity:.36 !important;
+    transform:translate3d(var(--assistive-x), var(--assistive-y), 0) scale(.92) !important;
+    box-shadow:0 8px 18px rgba(15,23,42,.18), inset 0 0 0 1px rgba(255,255,255,.08) !important;
+  }
+
+  .mobile-fab-nav.idle:not(.open):not(.dragging) .fab-main:hover,
+  .mobile-fab-nav.idle:not(.open):not(.dragging) .fab-main:focus-visible{
+    opacity:1 !important;
+  }
+
+  .mobile-fab-nav.open .fab-main{
+    opacity:0 !important;
+    pointer-events:none !important;
+    transform:translate3d(var(--assistive-x), var(--assistive-y), 0) scale(.76) !important;
+  }
+
+  .mobile-fab-nav .fab-main-icon{
+    width:36px !important;
+    height:36px !important;
+    transform:none !important;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.18)) !important;
+  }
+
+  .mobile-fab-nav.open .fab-main-icon{
+    transform:none !important;
+  }
+
+  .mobile-fab-nav .fab-menu{
+    position:absolute !important;
+    left:var(--assistive-menu-x, 12px) !important;
+    top:var(--assistive-menu-y, 120px) !important;
+    right:auto !important;
+    bottom:auto !important;
+    width:min(300px, calc(100vw - 24px)) !important;
+    height:auto !important;
+    min-height:310px !important;
+    max-height:calc(100dvh - 24px) !important;
+    padding:16px !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    border-radius:34px !important;
+    background:rgba(42,46,53,.94) !important;
+    color:#fff !important;
+    display:grid !important;
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+    grid-auto-rows:minmax(82px, 1fr) !important;
+    align-items:center !important;
+    justify-items:stretch !important;
+    gap:4px !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+    overflow:auto !important;
+    overscroll-behavior:contain !important;
+    backdrop-filter:blur(24px) saturate(130%) !important;
+    -webkit-backdrop-filter:blur(24px) saturate(130%) !important;
+    box-shadow:0 24px 58px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.08) !important;
+    transform:scale(.88) !important;
+    transform-origin:var(--assistive-origin-x, 100%) var(--assistive-origin-y, 50%) !important;
+    transition:opacity .20s ease, transform .24s cubic-bezier(.2,.82,.2,1), visibility .20s ease !important;
+    z-index:4 !important;
+  }
+
+  .mobile-fab-nav.open .fab-menu{
+    opacity:1 !important;
+    visibility:visible !important;
+    pointer-events:auto !important;
+    transform:scale(1) !important;
+  }
+
+  .mobile-fab-nav .fab-link,
+  .mobile-fab-nav.open .fab-link{
+    position:relative !important;
+    inset:auto !important;
+    width:100% !important;
+    min-width:0 !important;
+    height:82px !important;
+    padding:7px 3px !important;
+    margin:0 !important;
+    border:0 !important;
+    border-radius:22px !important;
+    background:transparent !important;
+    color:#fff !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:7px !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+    transform:none !important;
+    transition:background .16s ease, transform .16s ease !important;
+    -webkit-tap-highlight-color:transparent !important;
+  }
+
+  .mobile-fab-nav .fab-link:active{
+    background:rgba(255,255,255,.08) !important;
+    transform:scale(.94) !important;
+  }
+
+  .mobile-fab-nav .fab-bubble{
+    width:47px !important;
+    height:47px !important;
+    border-radius:17px !important;
+    background:rgba(255,255,255,.09) !important;
+    color:#fff !important;
+    display:grid !important;
+    place-items:center !important;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06) !important;
+    transition:background .16s ease, transform .16s ease, box-shadow .16s ease !important;
+  }
+
+  .mobile-fab-nav .fab-icon{
+    width:25px !important;
+    height:25px !important;
+  }
+
+  .mobile-fab-nav .fab-link b,
+  .mobile-fab-nav.open .fab-link b{
+    display:block !important;
+    width:100% !important;
+    max-width:86px !important;
+    min-height:16px !important;
+    margin:0 !important;
+    color:rgba(255,255,255,.92) !important;
+    font-size:12px !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:-.15px !important;
+    text-align:center !important;
+    text-shadow:none !important;
+    opacity:1 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+
+  .mobile-fab-nav .fab-link.active .fab-bubble{
+    background:linear-gradient(145deg, #2563eb, #144ca9) !important;
+    color:#fff !important;
+    box-shadow:0 9px 22px rgba(37,99,235,.38), inset 0 0 0 1px rgba(255,255,255,.16) !important;
+  }
+
+  .mobile-fab-nav .fab-link.active b{
+    color:#fff !important;
+    font-weight:850 !important;
+  }
+}
+
+@media (max-width: 390px){
+  .mobile-fab-nav .fab-main{
+    width:56px !important;
+    height:56px !important;
+  }
+  .mobile-fab-nav .fab-menu{
+    width:min(286px, calc(100vw - 20px)) !important;
+    min-height:294px !important;
+    padding:13px !important;
+    border-radius:31px !important;
+    grid-auto-rows:minmax(78px, 1fr) !important;
+  }
+  .mobile-fab-nav .fab-link,
+  .mobile-fab-nav.open .fab-link{
+    height:78px !important;
+  }
+  .mobile-fab-nav .fab-bubble{
+    width:44px !important;
+    height:44px !important;
+    border-radius:16px !important;
+  }
+  .mobile-fab-nav .fab-icon{
+    width:23px !important;
+    height:23px !important;
+  }
+  .mobile-fab-nav .fab-link b,
+  .mobile-fab-nav.open .fab-link b{
+    font-size:11.5px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -3912,9 +4156,10 @@ Total Rp0</pre>
     </main>
 
     <nav class="mobile-fab-nav" aria-label="Navigasi mobile cepat">
-      <button class="fab-main" id="mobileFabToggle" type="button" aria-label="Buka menu navigasi" aria-expanded="false">
-        <svg class="fab-main-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+      <button class="fab-main" id="mobileFabToggle" type="button" aria-label="Buka navigasi cepat. Geser untuk memindahkan." aria-expanded="false">
+        <svg class="fab-main-icon" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="15" fill="rgba(255,255,255,.16)" stroke="currentColor" stroke-width="3"></circle>
+          <circle cx="24" cy="24" r="10" fill="rgba(255,255,255,.92)" stroke="rgba(15,23,42,.22)" stroke-width="1.5"></circle>
         </svg>
       </button>
 
@@ -4642,32 +4887,227 @@ function setCashFilterThisMonth() {
 function bindNavigation() {
   const fabNav = document.querySelector(".mobile-fab-nav");
   const fabToggle = document.getElementById("mobileFabToggle");
+  const fabMenu = fabNav?.querySelector(".fab-menu");
 
-  if (fabToggle && fabNav) {
+  if (fabToggle && fabNav && fabMenu) {
+    const STORAGE_KEY = "cabe_assistive_nav_position_v1";
+    const MOBILE_MAX = 820;
+    const DRAG_THRESHOLD = 7;
+    const EDGE_GAP = 10;
+    const TOP_GAP = 76;
+    const BOTTOM_GAP = 18;
+    let idleTimer = 0;
+    let suppressClick = false;
+    let pointerId = null;
+    let dragging = false;
+    let startPointerX = 0;
+    let startPointerY = 0;
+    let startBubbleX = 0;
+    let startBubbleY = 0;
+    let position = { side: "right", yRatio: 0.68, x: 0, y: 0 };
+
+    const getViewport = () => {
+      const vv = window.visualViewport;
+      return {
+        left: vv ? vv.offsetLeft : 0,
+        top: vv ? vv.offsetTop : 0,
+        width: vv ? vv.width : window.innerWidth,
+        height: vv ? vv.height : window.innerHeight
+      };
+    };
+
+    const getBubbleSize = () => fabToggle.getBoundingClientRect().width || (window.innerWidth <= 390 ? 56 : 58);
+
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), Math.max(min, max));
+
+    const getBounds = () => {
+      const viewport = getViewport();
+      const size = getBubbleSize();
+      const minX = viewport.left + EDGE_GAP;
+      const maxX = viewport.left + viewport.width - size - EDGE_GAP;
+      const minY = viewport.top + Math.min(TOP_GAP, Math.max(12, viewport.height * 0.16));
+      const maxY = viewport.top + viewport.height - size - BOTTOM_GAP;
+      return { viewport, size, minX, maxX, minY, maxY };
+    };
+
+    const wake = () => {
+      fabNav.classList.remove("idle");
+      clearTimeout(idleTimer);
+      if (!fabNav.classList.contains("open") && !dragging) {
+        idleTimer = window.setTimeout(() => fabNav.classList.add("idle"), 2400);
+      }
+    };
+
+    const savePosition = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          side: position.side,
+          yRatio: Number(position.yRatio.toFixed(5))
+        }));
+      } catch (_) {}
+    };
+
+    const restorePosition = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (saved && (saved.side === "left" || saved.side === "right")) position.side = saved.side;
+        if (saved && Number.isFinite(Number(saved.yRatio))) position.yRatio = clamp(Number(saved.yRatio), 0, 1);
+      } catch (_) {}
+    };
+
+    const updateMenuPosition = () => {
+      const { viewport } = getBounds();
+      // Panel AssistiveTouch selalu dibuka tepat di tengah viewport.
+      // Posisi bubble tetap bebas dan tidak memengaruhi posisi panel.
+      const menuWidth = fabMenu.offsetWidth || Math.min(300, viewport.width - 24);
+      const menuHeight = fabMenu.offsetHeight || Math.min(310, viewport.height - 24);
+      const panelLeft = clamp(
+        viewport.left + (viewport.width - menuWidth) / 2,
+        viewport.left + 10,
+        viewport.left + viewport.width - menuWidth - 10
+      );
+      const panelTop = clamp(
+        viewport.top + (viewport.height - menuHeight) / 2,
+        viewport.top + 10,
+        viewport.top + viewport.height - menuHeight - 10
+      );
+
+      fabNav.style.setProperty("--assistive-menu-x", `${Math.round(panelLeft)}px`);
+      fabNav.style.setProperty("--assistive-menu-y", `${Math.round(panelTop)}px`);
+      fabNav.style.setProperty("--assistive-origin-x", "50%");
+      fabNav.style.setProperty("--assistive-origin-y", "50%");
+    };
+
+    const applyPosition = (x, y) => {
+      const { minX, maxX, minY, maxY } = getBounds();
+      position.x = clamp(x, minX, maxX);
+      position.y = clamp(y, minY, maxY);
+      fabNav.style.setProperty("--assistive-x", `${Math.round(position.x)}px`);
+      fabNav.style.setProperty("--assistive-y", `${Math.round(position.y)}px`);
+      updateMenuPosition();
+    };
+
+    const layoutFromSavedPosition = () => {
+      if (window.innerWidth > MOBILE_MAX) return;
+      const { minX, maxX, minY, maxY } = getBounds();
+      const x = position.side === "left" ? minX : maxX;
+      const y = minY + (maxY - minY) * clamp(position.yRatio, 0, 1);
+      applyPosition(x, y);
+    };
+
+    const snapToEdge = () => {
+      const { viewport, minX, maxX, minY, maxY, size } = getBounds();
+      position.side = position.x + size / 2 < viewport.left + viewport.width / 2 ? "left" : "right";
+      position.x = position.side === "left" ? minX : maxX;
+      position.y = clamp(position.y, minY, maxY);
+      position.yRatio = maxY > minY ? (position.y - minY) / (maxY - minY) : 0.5;
+      applyPosition(position.x, position.y);
+      savePosition();
+      wake();
+    };
+
+    const close = () => {
+      fabNav.classList.remove("open");
+      fabToggle.setAttribute("aria-expanded", "false");
+      fabMenu.setAttribute("aria-hidden", "true");
+      fabNav.querySelectorAll("button").forEach(button => button.blur());
+      wake();
+    };
+
+    const open = () => {
+      updateMenuPosition();
+      fabNav.classList.remove("idle");
+      clearTimeout(idleTimer);
+      fabNav.classList.add("open");
+      fabToggle.setAttribute("aria-expanded", "true");
+      fabMenu.setAttribute("aria-hidden", "false");
+    };
+
+    const toggle = () => fabNav.classList.contains("open") ? close() : open();
+
+    restorePosition();
+    requestAnimationFrame(layoutFromSavedPosition);
+
+    fabToggle.addEventListener("pointerdown", event => {
+      if (event.button !== undefined && event.button !== 0) return;
+      pointerId = event.pointerId;
+      startPointerX = event.clientX;
+      startPointerY = event.clientY;
+      startBubbleX = position.x;
+      startBubbleY = position.y;
+      dragging = false;
+      close();
+      wake();
+      fabToggle.setPointerCapture?.(pointerId);
+    });
+
+    fabToggle.addEventListener("pointermove", event => {
+      if (pointerId === null || event.pointerId !== pointerId) return;
+      const dx = event.clientX - startPointerX;
+      const dy = event.clientY - startPointerY;
+      if (!dragging && Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
+        dragging = true;
+        fabNav.classList.add("dragging");
+      }
+      if (!dragging) return;
+      event.preventDefault();
+      applyPosition(startBubbleX + dx, startBubbleY + dy);
+    });
+
+    const finishPointer = event => {
+      if (pointerId === null || (event.pointerId !== undefined && event.pointerId !== pointerId)) return;
+      try { fabToggle.releasePointerCapture?.(pointerId); } catch (_) {}
+      pointerId = null;
+      fabNav.classList.remove("dragging");
+      if (dragging) {
+        dragging = false;
+        suppressClick = true;
+        snapToEdge();
+        window.setTimeout(() => { suppressClick = false; }, 360);
+      }
+    };
+
+    fabToggle.addEventListener("pointerup", finishPointer);
+    fabToggle.addEventListener("pointercancel", finishPointer);
+
     fabToggle.addEventListener("click", event => {
       event.stopPropagation();
-      const isOpen = fabNav.classList.toggle("open");
-      fabToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-      fabNav.querySelector(".fab-menu")?.setAttribute("aria-hidden", isOpen ? "false" : "true");
-      setTimeout(() => window.positionMobileFab?.(), 40);
+      if (suppressClick) {
+        event.preventDefault();
+        return;
+      }
+      wake();
+      toggle();
     });
 
+    fabMenu.addEventListener("pointerdown", wake, { passive: true });
+
     document.addEventListener("click", event => {
-      if (!fabNav.contains(event.target)) {
-        fabNav.classList.remove("open");
-        fabToggle.setAttribute("aria-expanded", "false");
-        fabNav.querySelector(".fab-menu")?.setAttribute("aria-hidden", "true");
-        fabNav.querySelectorAll("button").forEach(button => button.blur());
-        setTimeout(() => window.positionMobileFab?.(), 40);
-      }
+      if (fabNav.classList.contains("open") && !fabMenu.contains(event.target) && event.target !== fabToggle) close();
     });
+
+    const relayout = () => {
+      if (dragging || window.innerWidth > MOBILE_MAX) return;
+      layoutFromSavedPosition();
+      if (fabNav.classList.contains("open")) updateMenuPosition();
+    };
+
+    window.addEventListener("resize", relayout, { passive: true });
+    window.addEventListener("orientationchange", () => window.setTimeout(relayout, 260), { passive: true });
+    window.addEventListener("scroll", wake, { passive: true });
+    window.visualViewport?.addEventListener("resize", relayout, { passive: true });
+    window.visualViewport?.addEventListener("scroll", relayout, { passive: true });
+
+    window.CABE_ASSISTIVE_NAV = { close, open, toggle, update: relayout, wake };
+    window.positionMobileFab = relayout;
+    wake();
   }
 
   document.querySelectorAll("[data-route], [data-route-button]").forEach(btn => {
     btn.addEventListener("click", () => navigate(btn.dataset.route || btn.dataset.routeButton));
   });
-  document.getElementById("refreshBtn").addEventListener("click", () => loadAll({ fresh: true }));
-  document.getElementById("stockRefreshBtn").addEventListener("click", loadStock);
+  document.getElementById("refreshBtn")?.addEventListener("click", () => loadAll({ fresh: true }));
+  document.getElementById("stockRefreshBtn")?.addEventListener("click", loadStock);
   document.getElementById("opnameBarangSelect")?.addEventListener("change", updateOpnameSummary);
   document.getElementById("opnameStokFisik")?.addEventListener("input", updateOpnameSummary);
   document.getElementById("formStokOpname")?.addEventListener("reset", () => setTimeout(updateOpnameSummary, 0));
@@ -4714,13 +5154,16 @@ function navigate(route) {
     btn.classList.toggle("active", btn.dataset.route === route);
   });
 
-  const fabNav = document.querySelector(".mobile-fab-nav");
-  const fabToggle = document.getElementById("mobileFabToggle");
-  if (fabNav && fabToggle) {
-    fabNav.classList.remove("open");
-    fabToggle.setAttribute("aria-expanded", "false");
-    fabNav.querySelector(".fab-menu")?.setAttribute("aria-hidden", "true");
-    fabNav.querySelectorAll("button").forEach(button => button.blur());
+  if (window.CABE_ASSISTIVE_NAV) {
+    window.CABE_ASSISTIVE_NAV.close();
+  } else {
+    const fabNav = document.querySelector(".mobile-fab-nav");
+    const fabToggle = document.getElementById("mobileFabToggle");
+    if (fabNav && fabToggle) {
+      fabNav.classList.remove("open");
+      fabToggle.setAttribute("aria-expanded", "false");
+      fabNav.querySelector(".fab-menu")?.setAttribute("aria-hidden", "true");
+    }
   }
 
   if (document.activeElement instanceof HTMLElement) {

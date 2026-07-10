@@ -112,11 +112,229 @@ function setCashFilterThisMonth() {
 }
 
 function bindNavigation() {
+  const fabNav = document.querySelector(".mobile-fab-nav");
+  const fabToggle = document.getElementById("mobileFabToggle");
+  const fabMenu = fabNav?.querySelector(".fab-menu");
+
+  if (fabToggle && fabNav && fabMenu) {
+    const STORAGE_KEY = "cabe_assistive_nav_position_v1";
+    const MOBILE_MAX = 820;
+    const DRAG_THRESHOLD = 7;
+    const EDGE_GAP = 10;
+    const TOP_GAP = 76;
+    const BOTTOM_GAP = 18;
+    let idleTimer = 0;
+    let suppressClick = false;
+    let pointerId = null;
+    let dragging = false;
+    let startPointerX = 0;
+    let startPointerY = 0;
+    let startBubbleX = 0;
+    let startBubbleY = 0;
+    let position = { side: "right", yRatio: 0.68, x: 0, y: 0 };
+
+    const getViewport = () => {
+      const vv = window.visualViewport;
+      return {
+        left: vv ? vv.offsetLeft : 0,
+        top: vv ? vv.offsetTop : 0,
+        width: vv ? vv.width : window.innerWidth,
+        height: vv ? vv.height : window.innerHeight
+      };
+    };
+
+    const getBubbleSize = () => fabToggle.getBoundingClientRect().width || (window.innerWidth <= 390 ? 56 : 58);
+
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), Math.max(min, max));
+
+    const getBounds = () => {
+      const viewport = getViewport();
+      const size = getBubbleSize();
+      const minX = viewport.left + EDGE_GAP;
+      const maxX = viewport.left + viewport.width - size - EDGE_GAP;
+      const minY = viewport.top + Math.min(TOP_GAP, Math.max(12, viewport.height * 0.16));
+      const maxY = viewport.top + viewport.height - size - BOTTOM_GAP;
+      return { viewport, size, minX, maxX, minY, maxY };
+    };
+
+    const wake = () => {
+      fabNav.classList.remove("idle");
+      clearTimeout(idleTimer);
+      if (!fabNav.classList.contains("open") && !dragging) {
+        idleTimer = window.setTimeout(() => fabNav.classList.add("idle"), 2400);
+      }
+    };
+
+    const savePosition = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          side: position.side,
+          yRatio: Number(position.yRatio.toFixed(5))
+        }));
+      } catch (_) {}
+    };
+
+    const restorePosition = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (saved && (saved.side === "left" || saved.side === "right")) position.side = saved.side;
+        if (saved && Number.isFinite(Number(saved.yRatio))) position.yRatio = clamp(Number(saved.yRatio), 0, 1);
+      } catch (_) {}
+    };
+
+    const updateMenuPosition = () => {
+      const { viewport } = getBounds();
+      // Panel AssistiveTouch selalu dibuka tepat di tengah viewport.
+      // Posisi bubble tetap bebas dan tidak memengaruhi posisi panel.
+      const menuWidth = fabMenu.offsetWidth || Math.min(300, viewport.width - 24);
+      const menuHeight = fabMenu.offsetHeight || Math.min(310, viewport.height - 24);
+      const panelLeft = clamp(
+        viewport.left + (viewport.width - menuWidth) / 2,
+        viewport.left + 10,
+        viewport.left + viewport.width - menuWidth - 10
+      );
+      const panelTop = clamp(
+        viewport.top + (viewport.height - menuHeight) / 2,
+        viewport.top + 10,
+        viewport.top + viewport.height - menuHeight - 10
+      );
+
+      fabNav.style.setProperty("--assistive-menu-x", `${Math.round(panelLeft)}px`);
+      fabNav.style.setProperty("--assistive-menu-y", `${Math.round(panelTop)}px`);
+      fabNav.style.setProperty("--assistive-origin-x", "50%");
+      fabNav.style.setProperty("--assistive-origin-y", "50%");
+    };
+
+    const applyPosition = (x, y) => {
+      const { minX, maxX, minY, maxY } = getBounds();
+      position.x = clamp(x, minX, maxX);
+      position.y = clamp(y, minY, maxY);
+      fabNav.style.setProperty("--assistive-x", `${Math.round(position.x)}px`);
+      fabNav.style.setProperty("--assistive-y", `${Math.round(position.y)}px`);
+      updateMenuPosition();
+    };
+
+    const layoutFromSavedPosition = () => {
+      if (window.innerWidth > MOBILE_MAX) return;
+      const { minX, maxX, minY, maxY } = getBounds();
+      const x = position.side === "left" ? minX : maxX;
+      const y = minY + (maxY - minY) * clamp(position.yRatio, 0, 1);
+      applyPosition(x, y);
+    };
+
+    const snapToEdge = () => {
+      const { viewport, minX, maxX, minY, maxY, size } = getBounds();
+      position.side = position.x + size / 2 < viewport.left + viewport.width / 2 ? "left" : "right";
+      position.x = position.side === "left" ? minX : maxX;
+      position.y = clamp(position.y, minY, maxY);
+      position.yRatio = maxY > minY ? (position.y - minY) / (maxY - minY) : 0.5;
+      applyPosition(position.x, position.y);
+      savePosition();
+      wake();
+    };
+
+    const close = () => {
+      fabNav.classList.remove("open");
+      fabToggle.setAttribute("aria-expanded", "false");
+      fabMenu.setAttribute("aria-hidden", "true");
+      fabNav.querySelectorAll("button").forEach(button => button.blur());
+      wake();
+    };
+
+    const open = () => {
+      updateMenuPosition();
+      fabNav.classList.remove("idle");
+      clearTimeout(idleTimer);
+      fabNav.classList.add("open");
+      fabToggle.setAttribute("aria-expanded", "true");
+      fabMenu.setAttribute("aria-hidden", "false");
+    };
+
+    const toggle = () => fabNav.classList.contains("open") ? close() : open();
+
+    restorePosition();
+    requestAnimationFrame(layoutFromSavedPosition);
+
+    fabToggle.addEventListener("pointerdown", event => {
+      if (event.button !== undefined && event.button !== 0) return;
+      pointerId = event.pointerId;
+      startPointerX = event.clientX;
+      startPointerY = event.clientY;
+      startBubbleX = position.x;
+      startBubbleY = position.y;
+      dragging = false;
+      close();
+      wake();
+      fabToggle.setPointerCapture?.(pointerId);
+    });
+
+    fabToggle.addEventListener("pointermove", event => {
+      if (pointerId === null || event.pointerId !== pointerId) return;
+      const dx = event.clientX - startPointerX;
+      const dy = event.clientY - startPointerY;
+      if (!dragging && Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
+        dragging = true;
+        fabNav.classList.add("dragging");
+      }
+      if (!dragging) return;
+      event.preventDefault();
+      applyPosition(startBubbleX + dx, startBubbleY + dy);
+    });
+
+    const finishPointer = event => {
+      if (pointerId === null || (event.pointerId !== undefined && event.pointerId !== pointerId)) return;
+      try { fabToggle.releasePointerCapture?.(pointerId); } catch (_) {}
+      pointerId = null;
+      fabNav.classList.remove("dragging");
+      if (dragging) {
+        dragging = false;
+        suppressClick = true;
+        snapToEdge();
+        window.setTimeout(() => { suppressClick = false; }, 360);
+      }
+    };
+
+    fabToggle.addEventListener("pointerup", finishPointer);
+    fabToggle.addEventListener("pointercancel", finishPointer);
+
+    fabToggle.addEventListener("click", event => {
+      event.stopPropagation();
+      if (suppressClick) {
+        event.preventDefault();
+        return;
+      }
+      wake();
+      toggle();
+    });
+
+    fabMenu.addEventListener("pointerdown", wake, { passive: true });
+
+    document.addEventListener("click", event => {
+      if (fabNav.classList.contains("open") && !fabMenu.contains(event.target) && event.target !== fabToggle) close();
+    });
+
+    const relayout = () => {
+      if (dragging || window.innerWidth > MOBILE_MAX) return;
+      layoutFromSavedPosition();
+      if (fabNav.classList.contains("open")) updateMenuPosition();
+    };
+
+    window.addEventListener("resize", relayout, { passive: true });
+    window.addEventListener("orientationchange", () => window.setTimeout(relayout, 260), { passive: true });
+    window.addEventListener("scroll", wake, { passive: true });
+    window.visualViewport?.addEventListener("resize", relayout, { passive: true });
+    window.visualViewport?.addEventListener("scroll", relayout, { passive: true });
+
+    window.CABE_ASSISTIVE_NAV = { close, open, toggle, update: relayout, wake };
+    window.positionMobileFab = relayout;
+    wake();
+  }
+
   document.querySelectorAll("[data-route], [data-route-button]").forEach(btn => {
     btn.addEventListener("click", () => navigate(btn.dataset.route || btn.dataset.routeButton));
   });
-  document.getElementById("refreshBtn").addEventListener("click", loadAll);
-  document.getElementById("stockRefreshBtn").addEventListener("click", loadStock);
+  document.getElementById("refreshBtn")?.addEventListener("click", loadAll);
+  document.getElementById("stockRefreshBtn")?.addEventListener("click", loadStock);
 }
 
 function bindMultiItems() {
@@ -152,13 +370,16 @@ function bindMultiItems() {
 }
 
 function navigate(route) {
-  const fabNav = document.querySelector(".mobile-fab-nav");
-  const fabToggle = document.getElementById("mobileFabToggle");
-  if (fabNav && fabToggle) {
-    fabNav.classList.remove("open");
-    fabToggle.setAttribute("aria-expanded", "false");
-    fabNav.querySelector(".fab-menu")?.setAttribute("aria-hidden", "true");
-    fabNav.querySelectorAll("button").forEach(button => button.blur());
+  if (window.CABE_ASSISTIVE_NAV) {
+    window.CABE_ASSISTIVE_NAV.close();
+  } else {
+    const fabNav = document.querySelector(".mobile-fab-nav");
+    const fabToggle = document.getElementById("mobileFabToggle");
+    if (fabNav && fabToggle) {
+      fabNav.classList.remove("open");
+      fabToggle.setAttribute("aria-expanded", "false");
+      fabNav.querySelector(".fab-menu")?.setAttribute("aria-hidden", "true");
+    }
   }
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 
@@ -166,7 +387,7 @@ function navigate(route) {
   document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
   document.getElementById(`page-${route}`)?.classList.add("active");
 
-  document.querySelectorAll(".nav-link,.mobile-link").forEach(btn => {
+  document.querySelectorAll(".nav-link,.mobile-link,.fab-link").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.route === route);
   });
 
