@@ -1,0 +1,22 @@
+PERBAIKAN INSTALASI PWA - CABE BISNIS
+
+Masalah awal:
+1. manifest.json tersedia, tetapi tidak ditautkan dari index.html.
+2. service-worker.js tersedia, tetapi tidak pernah didaftarkan oleh index.html.
+3. Metadata instalasi Android/iPhone belum lengkap.
+4. Header cache service worker dan MIME manifest belum diatur untuk Netlify.
+
+Perbaikan:
+- Menambahkan rel="manifest", favicon, dan apple-touch-icon.
+- Menambahkan metadata standalone untuk perangkat mobile.
+- Mendaftarkan service-worker.js saat halaman selesai dimuat.
+- Melengkapi id, scope, start_url, deskripsi, kategori, dan ikon manifest.
+- Memperbarui service worker dan cache aplikasi.
+- Menambahkan header Netlify untuk manifest dan service worker.
+
+Setelah deploy ulang:
+1. Pastikan situs dibuka melalui HTTPS, bukan file lokal atau HTTP biasa.
+2. Hapus pintasan/versi lama dari layar utama.
+3. Di Chrome Android: Setelan situs > hapus data situs, lalu buka ulang dan refresh.
+4. Tunggu beberapa detik, lalu buka menu Chrome dan pilih Instal aplikasi.
+5. Di iPhone, instalasi tetap dilakukan lewat Safari > Bagikan > Tambahkan ke Layar Utama > aktifkan Buka sebagai App Web.

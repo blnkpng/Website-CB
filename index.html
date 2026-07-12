@@ -4,6 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
   <meta name="theme-color" content="#0B3F9C" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="CABE" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="./assets/icon-192.png" />
   <title>CABE Bisnis</title>
   <style>
 :root{
@@ -6267,6 +6274,22 @@ function escapeAttr(value) {
   document.addEventListener('focusin', (e) => lockTarget(e.target), true);
   document.addEventListener('touchstart', (e) => lockTarget(e.target), {capture:true, passive:true});
   document.addEventListener('click', (e) => lockTarget(e.target), true);
+})();
+</script>
+
+<script>
+(function () {
+  if (!("serviceWorker" in navigator)) return;
+
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+      .then(function (registration) {
+        registration.update().catch(function () {});
+      })
+      .catch(function (error) {
+        console.error("Service worker gagal didaftarkan:", error);
+      });
+  });
 })();
 </script>
 </body>
