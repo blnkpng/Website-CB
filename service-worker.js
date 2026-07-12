@@ -1,8 +1,15 @@
-const CACHE_NAME = "cabe-bisnis-assistive-nav-v1-center-panel-v2";
+// Ubah versi cache agar browser di HP mereset cache yang lama
+const CACHE_NAME = "cabe-bisnis-assistive-nav-v3"; 
+
+// Masukkan semua file penting di sini, terutama ikon!
 const ASSETS = [
   "./",
   "index.html",
-  "manifest.json"
+  "manifest.json",
+  "assets/icon-192.png",
+  "assets/icon-512.png"
+  // Jika kamu punya file CSS atau JS tambahan, masukkan juga ke sini. 
+  // Contoh: "css/style.css", "js/app.js"
 ];
 
 self.addEventListener("install", event => {
@@ -12,7 +19,9 @@ self.addEventListener("install", event => {
 
 self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+    caches.keys().then(keys => Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+    ))
   );
   self.clients.claim();
 });
