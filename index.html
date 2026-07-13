@@ -113,7 +113,7 @@ h1{margin:0;font-size:34px;letter-spacing:-.04em;line-height:1.1}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
-.kpi-card{padding:18px;border-radius:var(--radius);background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow)}
+.kpi-card{padding:18px;border-radius:var(--radius);background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .kpi-card span{display:block;color:var(--muted);font-size:13px;font-weight:750}
 .kpi-card strong{display:block;margin-top:8px;color:var(--blue);font-size:25px;letter-spacing:-.04em}
 .kpi-card small{display:block;margin-top:8px;color:var(--muted);font-size:12px}
@@ -3163,16 +3163,79 @@ body.pin-locked .app-shell{
 
 
 /* =====================================================
-   FINAL PATCH - MENU PENGELUARAN
+   FINAL PATCH - HARGA & LABA TERAKHIR
    ===================================================== */
+.latest-profit-card{
+  margin-top:2px;
+  padding:18px;
+  border:1px solid var(--border);
+  border-radius:22px;
+  background:#fff;
+  box-shadow:0 10px 28px rgba(15,23,42,.06);
+}
+.latest-profit-card .panel-head{margin-bottom:16px;}
+.latest-profit-card .panel-head h3{font-size:20px;}
+.latest-profit-table{
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#fff;
+}
+.latest-profit-row{
+  display:grid;
+  grid-template-columns:minmax(130px,1.35fr) minmax(105px,.9fr) minmax(105px,.9fr);
+  align-items:center;
+}
+.latest-profit-row > span{
+  min-width:0;
+  padding:13px 14px;
+  border-bottom:1px solid var(--border);
+  font-size:13px;
+}
+.latest-profit-row:last-child > span{border-bottom:0;}
+.latest-profit-head{
+  background:#f2f4f7;
+  color:#475467;
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.latest-profit-row:not(.latest-profit-head):nth-child(odd){background:#fbfcfe;}
+.latest-profit-name{
+  overflow:hidden;
+  color:var(--text);
+  font-weight:850;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.latest-profit-value{color:var(--blue);font-weight:900;white-space:nowrap;}
+.latest-profit-value.zero{color:var(--muted);}
+#latestSaleProfitList{max-height:520px;overflow:auto;}
+.latest-profit-empty{
+  padding:24px 16px;
+  color:var(--muted);
+  text-align:center;
+  font-size:13px;
+  line-height:1.55;
+}
+
 @media (max-width: 820px){
   .fab-menu{grid-template-columns:repeat(9, minmax(0, 1fr)) !important;}
   .fab-link{width:42px !important;}
   .fab-bubble{width:36px !important;height:36px !important;}
   .fab-icon{width:17px !important;height:17px !important;}
   .fab-link b{font-size:8.3px !important;max-width:42px !important;}
-  #page-pengeluaran .pengeluaran-form{max-width:620px;}
 }
+@media (max-width:520px){
+  .latest-profit-card{padding:14px;border-radius:18px;}
+  .latest-profit-card .panel-head{gap:10px;}
+  .latest-profit-card .panel-head h3{font-size:18px;}
+  .latest-profit-row{grid-template-columns:minmax(0,1.25fr) minmax(82px,.82fr) minmax(78px,.78fr);}
+  .latest-profit-row > span{padding:11px 8px;font-size:11.5px;}
+  .latest-profit-head{font-size:10px;letter-spacing:.02em;}
+}
+
 @media (max-width:390px){
   .fab-menu{width:calc(100vw - 14px) !important;padding-left:5px !important;padding-right:5px !important;}
   .fab-link{width:40px !important;}
@@ -3182,7 +3245,464 @@ body.pin-locked .app-shell{
 }
 
 
+/* =====================================================
+   V7 - RIWAYAT NOTA + H.C PER PERIODE
+   ===================================================== */
+.nota-history-panel{margin-top:22px;}
+.nota-history-table{
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#fff;
+}
+.nota-history-row{
+  display:grid;
+  grid-template-columns:minmax(180px,1.4fr) minmax(150px,1fr) 92px;
+  align-items:center;
+}
+.nota-history-row > span,
+.nota-history-row > div{
+  min-width:0;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  font-size:13px;
+}
+.nota-history-row:last-child > span,
+.nota-history-row:last-child > div{border-bottom:0;}
+.nota-history-head{
+  background:#f2f4f7;
+  color:#475467;
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.nota-history-row:not(.nota-history-head):nth-child(odd){background:#fbfcfe;}
+.nota-history-number{
+  overflow:hidden;
+  color:var(--text);
+  font-weight:900;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.nota-history-number a{color:inherit;text-decoration:none;}
+.nota-history-number a:hover{text-decoration:underline;}
+.nota-history-date{color:var(--blue);font-weight:850;white-space:nowrap;}
+.nota-history-check{display:flex;justify-content:center;align-items:center;}
+.nota-history-check input{
+  width:22px;
+  height:22px;
+  margin:0;
+  accent-color:var(--blue);
+  cursor:pointer;
+}
+.nota-history-check input:disabled{cursor:wait;opacity:.55;}
+.nota-history-empty{
+  padding:28px 16px;
+  color:var(--muted);
+  text-align:center;
+  font-size:13px;
+  line-height:1.55;
+}
+@media (max-width:520px){
+  .nota-history-panel{margin-top:16px;}
+  .nota-history-row{grid-template-columns:minmax(0,1.25fr) minmax(100px,.9fr) 58px;}
+  .nota-history-row > span,
+  .nota-history-row > div{padding:12px 9px;font-size:11.5px;}
+  .nota-history-head{font-size:9.5px;letter-spacing:.02em;}
+  .nota-history-check input{width:21px;height:21px;}
+}
 
+
+/* =====================================================
+   V8 - RIWAYAT NOTA PERSISTEN + PANDUAN PERIODE BERIKUTNYA
+   ===================================================== */
+.nota-period-guide{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin:0 0 18px;
+  padding:16px 18px;
+  border:1px solid #cfe0ff;
+  border-radius:18px;
+  background:linear-gradient(135deg,#f7faff 0%,#edf4ff 100%);
+}
+.nota-period-copy{display:grid;gap:4px;min-width:0;}
+.nota-period-copy > span{
+  color:var(--blue);
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+.nota-period-copy strong{
+  overflow:hidden;
+  color:var(--text);
+  font-size:15px;
+  font-weight:900;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.nota-period-copy small{color:var(--muted);font-size:12px;line-height:1.45;}
+.nota-period-use{flex:0 0 auto;min-height:44px;padding:10px 14px;}
+.nota-period-use[hidden]{display:none !important;}
+
+@media (max-width:620px){
+  .nota-period-guide{align-items:stretch;flex-direction:column;padding:15px;}
+  .nota-period-copy strong{font-size:14px;white-space:normal;}
+  .nota-period-use{width:100%;}
+}
+
+
+
+
+
+/* =====================================================
+   V11 - PENGELUARAN MOBILE LEBIH RAPI & RESPONSIF
+   ===================================================== */
+#page-pengeluaran .expense-entry-panel,
+#page-pengeluaran .expense-history-panel{
+  overflow:hidden;
+}
+#page-pengeluaran .expense-panel-head,
+#page-pengeluaran .expense-history-headline{
+  align-items:center;
+}
+#page-pengeluaran .expense-form-shell{
+  padding:18px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:linear-gradient(180deg,#fbfdff 0%,#f7f9fc 100%);
+}
+#page-pengeluaran .expense-form{
+  width:100%;
+  max-width:none;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+}
+#page-pengeluaran .expense-form label{min-width:0;}
+#page-pengeluaran .expense-action-row{
+  justify-content:flex-start;
+  padding-top:2px;
+}
+#page-pengeluaran .expense-action-row .btn{min-width:156px;}
+.expense-edit-notice{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 16px;
+  border:1px solid #bfd4ff;
+  border-radius:16px;
+  background:#eef4ff;
+}
+.expense-edit-notice[hidden]{display:none !important;}
+.expense-edit-notice strong{
+  display:block;
+  color:var(--blue);
+  font-size:13px;
+}
+.expense-edit-notice span{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:650;
+}
+.expense-edit-notice .expense-edit-id{
+  flex:0 0 auto;
+  margin:0;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#fff;
+  color:var(--blue);
+  font-size:11px;
+  font-weight:900;
+}
+.expense-cancel-edit{color:var(--red);}
+.expense-history-table{
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#fff;
+}
+.expense-history-row{
+  display:grid;
+  grid-template-columns:minmax(110px,.72fr) minmax(130px,.9fr) minmax(130px,.82fr) minmax(105px,.68fr) minmax(190px,1.5fr) 178px;
+  align-items:center;
+}
+.expense-history-row > span,
+.expense-history-row > div{
+  min-width:0;
+  padding:13px 14px;
+  border-bottom:1px solid var(--border);
+}
+#pengeluaranHistoryRows .expense-history-row:last-child > span,
+#pengeluaranHistoryRows .expense-history-row:last-child > div{border-bottom:0;}
+.expense-history-head{
+  background:#f2f4f7;
+  color:#475467;
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+#pengeluaranHistoryRows .expense-history-row:nth-child(even){background:#fbfcfe;}
+.expense-history-date{
+  color:var(--text);
+  font-weight:850;
+  white-space:nowrap;
+}
+.expense-history-category{
+  overflow:hidden;
+  color:var(--blue);
+  font-weight:900;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.expense-history-amount{
+  color:var(--red);
+  font-weight:900;
+  white-space:nowrap;
+}
+.expense-history-method{
+  color:#475467;
+  font-weight:850;
+  white-space:nowrap;
+}
+.expense-history-note{
+  overflow:hidden;
+  color:var(--muted);
+  font-size:12.5px;
+  line-height:1.45;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.expense-history-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+.expense-action-btn{
+  min-height:38px;
+  padding:8px 11px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:#fff;
+  color:var(--blue);
+  font-size:12px;
+  font-weight:900;
+  transition:.18s ease;
+}
+.expense-action-btn:hover{
+  border-color:#bfd4ff;
+  background:#eef4ff;
+}
+.expense-action-btn.delete{color:var(--red);}
+.expense-action-btn.delete:hover{
+  border-color:#fecdca;
+  background:#fef3f2;
+}
+.expense-action-btn:disabled{opacity:.5;}
+.expense-history-empty{
+  padding:30px 16px;
+  color:var(--muted);
+  text-align:center;
+  font-size:13px;
+  line-height:1.55;
+}
+.expense-history-row.is-busy{
+  opacity:.55;
+  pointer-events:none;
+}
+
+@media(max-width:1180px){
+  .expense-history-row{
+    grid-template-columns:110px minmax(120px,.85fr) 125px 100px minmax(170px,1.25fr) 164px;
+  }
+  .expense-history-row > span,
+  .expense-history-row > div{padding:12px 10px;}
+}
+
+@media(max-width:820px){
+  #page-pengeluaran .expense-form-shell{
+    padding:15px;
+    border-radius:18px;
+  }
+  #page-pengeluaran .expense-form{
+    grid-template-columns:1fr;
+    gap:14px;
+  }
+  #page-pengeluaran .expense-form .wide{grid-column:1;}
+  #page-pengeluaran .expense-action-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  #page-pengeluaran .expense-action-row .btn{
+    width:100%;
+    min-width:0;
+  }
+  #page-pengeluaran .expense-cancel-edit:not([hidden]){grid-column:1 / -1;}
+
+  /* Header tabel desktop wajib hilang di layar kecil. */
+  .expense-history-row.expense-history-head{display:none !important;}
+  .expense-history-table{
+    overflow:visible;
+    border:0;
+    border-radius:0;
+    background:transparent;
+  }
+  #pengeluaranHistoryRows{
+    display:grid;
+    gap:14px;
+  }
+  #pengeluaranHistoryRows .expense-history-row{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    overflow:hidden;
+    padding:14px;
+    border:1px solid #dfe5ee;
+    border-radius:18px;
+    background:#fff !important;
+    box-shadow:0 8px 24px rgba(16,24,40,.055);
+  }
+  #pengeluaranHistoryRows .expense-history-row > span,
+  #pengeluaranHistoryRows .expense-history-row > div{
+    position:relative;
+    display:block;
+    min-width:0;
+    min-height:0;
+    padding:25px 12px 11px;
+    border:0;
+    border-radius:12px;
+    background:#f7f9fc;
+  }
+  #pengeluaranHistoryRows .expense-history-row > [data-label]::before{
+    content:attr(data-label);
+    position:absolute;
+    top:8px;
+    left:12px;
+    color:#667085;
+    font-size:9px;
+    font-weight:900;
+    line-height:1;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+  #pengeluaranHistoryRows .expense-history-date{
+    grid-column:1;
+    grid-row:1;
+    font-size:15px;
+  }
+  #pengeluaranHistoryRows .expense-history-category{
+    grid-column:2;
+    grid-row:1;
+    background:#eef4ff;
+    font-size:15px;
+  }
+  #pengeluaranHistoryRows .expense-history-amount{
+    grid-column:1;
+    grid-row:2;
+    background:#fff3f2;
+    font-size:17px;
+  }
+  #pengeluaranHistoryRows .expense-history-method{
+    grid-column:2;
+    grid-row:2;
+    font-size:15px;
+  }
+  #pengeluaranHistoryRows .expense-history-note{
+    grid-column:1 / -1;
+    grid-row:3;
+    min-height:58px;
+    padding-top:27px;
+    color:#475467;
+    font-size:13px;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+  #pengeluaranHistoryRows .expense-history-row > .expense-history-actions{
+    grid-column:1 / -1;
+    grid-row:4;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    padding:0;
+    background:transparent;
+  }
+  #pengeluaranHistoryRows .expense-history-row > .expense-history-actions::before{display:none;}
+  .expense-action-btn{
+    width:100%;
+    min-height:44px;
+    border-radius:12px;
+    background:#fff;
+  }
+}
+
+@media(max-width:520px){
+  #page-pengeluaran .expense-entry-panel,
+  #page-pengeluaran .expense-history-panel{padding:14px;}
+  #page-pengeluaran .expense-panel-head,
+  #page-pengeluaran .expense-history-headline{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:start;
+    gap:7px 10px;
+  }
+  #page-pengeluaran .expense-panel-head > div,
+  #page-pengeluaran .expense-history-headline > div{min-width:0;}
+  #page-pengeluaran .expense-panel-head h3,
+  #page-pengeluaran .expense-history-headline h3{
+    font-size:20px;
+    line-height:1.2;
+  }
+  #page-pengeluaran .expense-history-headline p{
+    margin-top:6px;
+    font-size:12.5px;
+    line-height:1.5;
+  }
+  #page-pengeluaran .expense-history-headline .pill{
+    align-self:start;
+    padding:8px 11px;
+    white-space:nowrap;
+  }
+  .expense-edit-notice{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  #pengeluaranHistoryRows{gap:12px;}
+  #pengeluaranHistoryRows .expense-history-row{
+    gap:8px;
+    padding:11px;
+    border-radius:16px;
+  }
+  #pengeluaranHistoryRows .expense-history-row > span,
+  #pengeluaranHistoryRows .expense-history-row > div{
+    padding-left:10px;
+    padding-right:10px;
+    border-radius:10px;
+  }
+  #pengeluaranHistoryRows .expense-history-row > [data-label]::before{left:10px;}
+}
+
+@media(max-width:380px){
+  #page-pengeluaran .expense-action-row{grid-template-columns:1fr;}
+  #pengeluaranHistoryRows .expense-history-row{
+    grid-template-columns:1fr;
+  }
+  #pengeluaranHistoryRows .expense-history-date,
+  #pengeluaranHistoryRows .expense-history-category,
+  #pengeluaranHistoryRows .expense-history-amount,
+  #pengeluaranHistoryRows .expense-history-method,
+  #pengeluaranHistoryRows .expense-history-note,
+  #pengeluaranHistoryRows .expense-history-actions{
+    grid-column:1;
+    grid-row:auto;
+  }
+}
 
 /* === V32 FULL iPhone Form Zoom Lock ===
    Semua kolom input dikunci minimal 17px supaya iPhone/Safari tidak auto-zoom saat fokus. */
@@ -3549,6 +4069,1296 @@ input[type="date"]::-webkit-datetime-edit-year-field{
   }
 }
 
+
+
+/* =========================================================
+   V9 - CASHFLOW CENTER + RESPONSIVE TABLE
+   ========================================================= */
+#page-cashflow .cash-summary article{
+  min-height:98px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+#page-cashflow .cash-summary span,
+#page-cashflow .cash-summary strong{
+  width:100%;
+  text-align:center;
+}
+
+#page-cashflow .cash-summary strong{
+  line-height:1.15;
+  overflow-wrap:anywhere;
+}
+
+#page-cashflow .cashflow-list-wrap{
+  overflow:hidden;
+}
+
+#page-cashflow .cashflow-list-head,
+#page-cashflow .cash-row-main{
+  grid-template-columns:96px minmax(180px,1fr) minmax(180px,1fr) 92px 92px 106px !important;
+  gap:12px !important;
+  padding-left:16px !important;
+  padding-right:16px !important;
+}
+
+#page-cashflow .cashflow-list-head{
+  padding-top:14px !important;
+  padding-bottom:14px !important;
+}
+
+#page-cashflow .cashflow-list-head > span{
+  min-width:0;
+  text-align:center;
+  line-height:1.25;
+}
+
+#page-cashflow .cash-row-main{
+  padding-top:13px !important;
+  padding-bottom:13px !important;
+}
+
+#page-cashflow .cash-day{
+  width:48px !important;
+  height:48px !important;
+  margin-inline:auto;
+  border-radius:14px !important;
+  font-size:20px !important;
+}
+
+#page-cashflow .cash-row-amount{
+  min-width:0;
+  min-height:48px !important;
+  padding:8px 12px !important;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center !important;
+  text-align:center;
+  border-radius:14px !important;
+}
+
+#page-cashflow .cash-row-amount > span{
+  display:none;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+#page-cashflow .cash-row-amount strong{
+  max-width:100%;
+  font-size:14px !important;
+  line-height:1.2 !important;
+  overflow-wrap:anywhere;
+}
+
+#page-cashflow .cash-row-check{
+  min-width:0;
+  min-height:48px !important;
+  padding:7px 8px !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border-radius:14px !important;
+  text-align:center;
+}
+
+#page-cashflow .cash-check-text{
+  display:inline-block;
+  color:var(--blue);
+  font-size:11px;
+  font-weight:950;
+  line-height:1;
+}
+
+#page-cashflow .cash-row-check input{
+  flex:0 0 auto;
+  width:18px !important;
+  height:18px !important;
+  margin:0;
+}
+
+#page-cashflow .cash-row-detail-btn{
+  min-width:0;
+  min-height:48px !important;
+  padding:8px !important;
+  border-radius:14px !important;
+  font-size:12px !important;
+  text-align:center;
+}
+
+@media(max-width:1100px) and (min-width:621px){
+  #page-cashflow .cashflow-list-head,
+  #page-cashflow .cash-row-main{
+    grid-template-columns:72px minmax(125px,1fr) minmax(125px,1fr) 74px 74px 82px !important;
+    gap:8px !important;
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+
+  #page-cashflow .cashflow-list-head{
+    font-size:10px !important;
+  }
+
+  #page-cashflow .cash-day{
+    width:40px !important;
+    height:40px !important;
+    font-size:18px !important;
+  }
+
+  #page-cashflow .cash-row-amount,
+  #page-cashflow .cash-row-check,
+  #page-cashflow .cash-row-detail-btn{
+    min-height:42px !important;
+  }
+
+  #page-cashflow .cash-row-amount strong{
+    font-size:12px !important;
+  }
+
+  #page-cashflow .cash-check-text{
+    font-size:10px;
+  }
+}
+
+@media(max-width:620px){
+  #page-cashflow .cash-summary article{
+    min-height:88px;
+    padding:14px 10px !important;
+  }
+
+  #page-cashflow .cash-summary span{
+    font-size:11px !important;
+  }
+
+  #page-cashflow .cash-summary strong{
+    margin-top:6px;
+    font-size:18px !important;
+  }
+
+  #page-cashflow .cashflow-list-wrap{
+    border:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    overflow:visible !important;
+  }
+
+  #page-cashflow .cashflow-list-head{
+    display:none !important;
+  }
+
+  #page-cashflow .cashflow-list{
+    display:grid !important;
+    gap:12px !important;
+  }
+
+  #page-cashflow .cash-row-card{
+    border:1px solid var(--border) !important;
+    border-radius:20px !important;
+    background:#fff !important;
+    overflow:hidden !important;
+    box-shadow:0 10px 24px rgba(16,24,40,.06) !important;
+  }
+
+  #page-cashflow .cash-row-main{
+    display:grid !important;
+    grid-template-columns:62px minmax(0,1fr) minmax(0,1fr) 74px !important;
+    grid-template-areas:
+      "date income income detail"
+      "date outcome outcome detail"
+      "date hc lc detail" !important;
+    gap:8px !important;
+    padding:11px !important;
+    align-items:stretch !important;
+  }
+
+  #page-cashflow .cash-day{
+    grid-area:date !important;
+    width:62px !important;
+    height:auto !important;
+    min-height:146px !important;
+    margin:0 !important;
+    align-self:stretch;
+    border-radius:16px !important;
+    font-size:24px !important;
+  }
+
+  #page-cashflow .cash-row-amount{
+    min-height:44px !important;
+    padding:7px 9px !important;
+    gap:2px;
+    border-radius:14px !important;
+  }
+
+  #page-cashflow .cash-row-amount.in{
+    grid-area:income !important;
+  }
+
+  #page-cashflow .cash-row-amount.out{
+    grid-area:outcome !important;
+  }
+
+  #page-cashflow .cash-row-amount > span{
+    display:block;
+  }
+
+  #page-cashflow .cash-row-amount strong{
+    font-size:14px !important;
+  }
+
+  #page-cashflow .cash-row-check{
+    min-height:42px !important;
+    padding:6px !important;
+    border-radius:14px !important;
+  }
+
+  #page-cashflow .cash-row-check-hc{
+    grid-area:hc !important;
+  }
+
+  #page-cashflow .cash-row-check-lc{
+    grid-area:lc !important;
+  }
+
+  #page-cashflow .cash-check-text{
+    font-size:12px;
+  }
+
+  #page-cashflow .cash-row-check input{
+    width:18px !important;
+    height:18px !important;
+  }
+
+  #page-cashflow .cash-row-detail-btn{
+    grid-area:detail !important;
+    width:100%;
+    height:auto !important;
+    min-height:0 !important;
+    padding:8px 5px !important;
+    align-self:stretch !important;
+    border-radius:14px !important;
+    font-size:12px !important;
+  }
+
+  #page-cashflow .cash-row-detail{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+    padding:0 11px 11px !important;
+  }
+}
+
+@media(max-width:380px){
+  #page-cashflow .cash-row-main{
+    grid-template-columns:54px minmax(0,1fr) minmax(0,1fr) 64px !important;
+    gap:6px !important;
+    padding:9px !important;
+  }
+
+  #page-cashflow .cash-day{
+    width:54px !important;
+    min-height:138px !important;
+    font-size:22px !important;
+  }
+
+  #page-cashflow .cash-row-amount{
+    padding:6px !important;
+  }
+
+  #page-cashflow .cash-row-amount > span{
+    font-size:9px;
+  }
+
+  #page-cashflow .cash-row-amount strong{
+    font-size:12px !important;
+  }
+
+  #page-cashflow .cash-row-check{
+    gap:5px;
+  }
+
+  #page-cashflow .cash-check-text{
+    font-size:11px;
+  }
+
+  #page-cashflow .cash-row-detail-btn{
+    font-size:11px !important;
+  }
+
+  #page-cashflow .cash-row-detail{
+    grid-template-columns:1fr !important;
+  }
+}
+
+
+/* ===== CABE v12: Hutang rapi + riwayat pembayaran ===== */
+#page-hutang .debt-payment-panel{
+  margin-bottom:18px;
+  overflow:hidden;
+}
+#page-hutang .debt-payment-head{align-items:center;}
+#page-hutang .debt-payment-form{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  align-items:end;
+}
+#page-hutang .debt-field-span-2{grid-column:span 2;}
+#page-hutang .debt-form-actions{
+  grid-column:1 / -1;
+  justify-content:flex-start;
+  padding-top:2px;
+}
+#page-hutang .debt-bottom-grid{
+  display:grid;
+  grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+  gap:18px;
+  align-items:start;
+}
+#page-hutang .debt-bottom-grid > .panel{margin-bottom:0;min-width:0;}
+#page-hutang .debt-card-head{align-items:center;}
+#page-hutang .debt-total-strip{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+  padding:14px 16px;
+  border:1px solid #cfe0ff;
+  border-radius:17px;
+  background:linear-gradient(135deg,#f7faff,#eaf2ff);
+}
+#page-hutang .debt-total-strip span{color:var(--muted);font-size:13px;font-weight:800;}
+#page-hutang .debt-total-strip strong{color:var(--blue);font-size:20px;letter-spacing:-.03em;}
+#page-hutang .debt-card-list{display:grid;gap:10px;}
+#page-hutang .debt-card{
+  padding:15px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#f9fafb;
+}
+#page-hutang .debt-card-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+#page-hutang .debt-card-top strong{display:block;font-size:15px;line-height:1.35;}
+#page-hutang .debt-card-top small{display:block;margin-top:4px;color:var(--muted);font-size:12px;font-weight:700;overflow-wrap:anywhere;}
+#page-hutang .debt-metrics{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+#page-hutang .debt-metric{
+  min-width:0;
+  padding:10px;
+  border-radius:13px;
+  background:#fff;
+  border:1px solid var(--border);
+  text-align:center;
+}
+#page-hutang .debt-metric span{display:block;color:var(--muted);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;}
+#page-hutang .debt-metric strong{display:block;margin-top:4px;color:#344054;font-size:13px;line-height:1.3;overflow-wrap:anywhere;}
+#page-hutang .debt-metric.balance strong{color:var(--red);}
+#page-hutang .debt-history-table{overflow:hidden;border:1px solid var(--border);border-radius:18px;background:#fff;}
+#page-hutang .debt-history-row{
+  display:grid;
+  grid-template-columns:80px minmax(120px,1.05fr) 100px 78px minmax(105px,.9fr);
+  gap:8px;
+  align-items:center;
+  padding:13px 14px;
+  border-bottom:1px solid var(--border);
+}
+#page-hutang #debtPaymentHistoryRows .debt-history-row:last-child{border-bottom:0;}
+#page-hutang .debt-history-head{background:#f2f4f7;color:#475467;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;}
+#page-hutang .debt-history-row > span{min-width:0;font-size:12px;line-height:1.45;overflow-wrap:anywhere;}
+#page-hutang .debt-history-date{font-weight:850;color:#344054;}
+#page-hutang .debt-history-supplier strong{display:block;color:var(--blue);font-size:13px;}
+#page-hutang .debt-history-supplier small{display:block;margin-top:3px;color:var(--muted);font-size:11px;overflow-wrap:anywhere;}
+#page-hutang .debt-history-amount{font-weight:900;color:var(--green);}
+#page-hutang .debt-history-method{font-weight:850;color:#344054;}
+#page-hutang .debt-history-note{color:var(--muted);}
+#page-hutang .debt-history-empty{padding:24px;text-align:center;color:var(--muted);font-size:13px;}
+@media(max-width:1180px){
+  #page-hutang .debt-payment-form{grid-template-columns:repeat(2,minmax(0,1fr));}
+  #page-hutang .debt-field-span-2{grid-column:span 1;}
+  #page-hutang .debt-payment-form label:last-of-type{grid-column:1 / -1;}
+  #page-hutang .debt-bottom-grid{grid-template-columns:1fr;}
+}
+@media(max-width:820px){
+  #page-hutang .debt-payment-panel,
+  #page-hutang .debt-list-panel,
+  #page-hutang .debt-history-panel{padding:18px;border-radius:22px;}
+  #page-hutang .debt-payment-form{grid-template-columns:1fr !important;gap:12px;}
+  #page-hutang .debt-field-span-2,
+  #page-hutang .debt-payment-form label:last-of-type,
+  #page-hutang .debt-form-actions{grid-column:1 !important;}
+  #page-hutang .debt-form-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  #page-hutang .debt-form-actions .btn{width:100%;}
+  #page-hutang .debt-bottom-grid{gap:14px;}
+  #page-hutang .debt-history-table{border:0;border-radius:0;background:transparent;overflow:visible;}
+  #page-hutang .debt-history-head{display:none !important;}
+  #page-hutang #debtPaymentHistoryRows{display:grid;gap:10px;}
+  #page-hutang #debtPaymentHistoryRows .debt-history-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    padding:14px;
+    border:1px solid var(--border);
+    border-radius:17px;
+    background:#f9fafb;
+  }
+  #page-hutang #debtPaymentHistoryRows .debt-history-row > span{
+    display:block;
+    position:relative;
+    padding-top:17px;
+    min-width:0;
+  }
+  #page-hutang #debtPaymentHistoryRows .debt-history-row > span::before{
+    content:attr(data-label);
+    position:absolute;
+    top:0;left:0;
+    color:#667085;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+  #page-hutang .debt-history-supplier,
+  #page-hutang .debt-history-note{grid-column:1 / -1;}
+}
+@media(max-width:480px){
+  #page-hutang .debt-payment-head,
+  #page-hutang .debt-card-head{display:flex;align-items:flex-start;}
+  #page-hutang .debt-payment-head h3,
+  #page-hutang .debt-card-head h3{font-size:20px;}
+  #page-hutang .debt-payment-head p,
+  #page-hutang .debt-card-head p{font-size:13px;}
+  #page-hutang .debt-payment-head .pill,
+  #page-hutang .debt-card-head .pill{flex:0 0 auto;font-size:10px;padding:6px 8px;}
+  #page-hutang .debt-form-actions{grid-template-columns:1fr;}
+  #page-hutang .debt-total-strip{align-items:flex-start;flex-direction:column;gap:5px;}
+  #page-hutang .debt-metrics{grid-template-columns:1fr 1fr;}
+  #page-hutang .debt-metric.balance{grid-column:1 / -1;}
+  #page-hutang #debtPaymentHistoryRows .debt-history-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:360px){
+  #page-hutang #debtPaymentHistoryRows .debt-history-row{grid-template-columns:1fr;}
+  #page-hutang .debt-history-supplier,
+  #page-hutang .debt-history-note{grid-column:1;}
+}
+
+
+
+/* ===== CABE v13: Stok Opname rapi + riwayat ===== */
+#page-opname .opname-entry-panel,
+#page-opname .opname-history-panel{overflow:hidden;}
+#page-opname .opname-panel-head,
+#page-opname .opname-history-title{align-items:center;}
+#page-opname .opname-form-grid{
+  display:grid;
+  grid-template-columns:minmax(180px,.72fr) minmax(260px,1.3fr) minmax(180px,.8fr);
+  gap:15px;
+  align-items:start;
+}
+#page-opname .opname-form-grid > label{min-width:0;}
+#page-opname .opname-field-item{grid-column:span 2;}
+#page-opname .opname-field-note-wide{grid-column:span 2;}
+#page-opname .opname-field-note-wide textarea{min-height:94px;resize:vertical;}
+#page-opname .opname-summary{
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:minmax(145px,.62fr) minmax(230px,1.3fr) minmax(170px,.78fr);
+  gap:10px;
+  padding:12px;
+  border:1px solid #cfe0ff;
+  border-radius:18px;
+  background:linear-gradient(135deg,#f8fbff,#eef4ff);
+}
+#page-opname .opname-summary > div{
+  min-width:0;
+  padding:13px 15px;
+  border:1px solid rgba(164,190,232,.62);
+  border-radius:14px;
+  background:rgba(255,255,255,.84);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  text-align:center;
+}
+#page-opname .opname-summary span{
+  color:#667085;
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+#page-opname .opname-summary strong{
+  margin-top:5px;
+  color:var(--blue);
+  font-size:25px;
+  line-height:1.15;
+  overflow-wrap:anywhere;
+}
+#page-opname .opname-summary small{
+  display:block;
+  margin-top:5px;
+  color:#344054;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+#page-opname .opname-summary #opnameNilaiSelisih{
+  margin-top:5px;
+  color:var(--blue);
+  font-size:17px;
+  font-weight:900;
+}
+#page-opname .opname-form-actions{grid-column:1 / -1;margin-top:0;justify-content:flex-start;}
+#page-opname .opname-history-table{
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#fff;
+}
+#page-opname .opname-history-row{
+  display:grid;
+  grid-template-columns:92px minmax(145px,1.18fr) 92px 88px 90px 120px 105px minmax(150px,1.15fr);
+  gap:8px;
+  align-items:center;
+  padding:13px 14px;
+  border-bottom:1px solid var(--border);
+}
+#page-opname #opnameHistoryRows .opname-history-row:last-child{border-bottom:0;}
+#page-opname .opname-history-head{
+  background:#f2f4f7;
+  color:#475467;
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+#page-opname .opname-history-row > span{min-width:0;font-size:12px;line-height:1.45;overflow-wrap:anywhere;}
+#page-opname .opname-history-date{font-weight:900;color:#344054;}
+#page-opname .opname-history-item strong{display:block;color:var(--blue);font-size:13px;line-height:1.35;}
+#page-opname .opname-history-item small{display:block;margin-top:3px;color:var(--muted);font-size:10px;font-weight:750;}
+#page-opname .opname-history-number{text-align:center;font-weight:850;color:#344054;}
+#page-opname .opname-history-diff{text-align:center;font-weight:950;}
+#page-opname .opname-history-diff.positive{color:var(--green);}
+#page-opname .opname-history-diff.negative{color:var(--red);}
+#page-opname .opname-history-diff.neutral{color:#667085;}
+#page-opname .opname-history-value{font-weight:900;color:#344054;}
+#page-opname .opname-history-value small{display:block;margin-top:2px;color:var(--muted);font-size:10px;font-weight:750;}
+#page-opname .opname-history-officer{font-weight:850;color:#344054;}
+#page-opname .opname-history-note{color:var(--muted);}
+#page-opname .opname-history-empty{padding:26px;text-align:center;color:var(--muted);font-size:13px;}
+@media(max-width:1180px){
+  #page-opname .opname-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  #page-opname .opname-field-item{grid-column:span 1;}
+  #page-opname .opname-field-note-wide{grid-column:1 / -1;}
+  #page-opname .opname-summary{grid-template-columns:repeat(3,minmax(0,1fr));}
+  #page-opname .opname-history-table{overflow-x:auto;}
+  #page-opname .opname-history-row{min-width:1040px;}
+}
+@media(max-width:820px){
+  #page-opname .opname-entry-panel,
+  #page-opname .opname-history-panel{padding:17px;}
+  #page-opname .opname-panel-head,
+  #page-opname .opname-history-title{display:flex;align-items:flex-start;gap:10px;}
+  #page-opname .opname-panel-head .pill,
+  #page-opname .opname-history-title .pill{flex:0 0 auto;}
+  #page-opname .opname-form-grid{grid-template-columns:1fr;gap:13px;}
+  #page-opname .opname-field-item,
+  #page-opname .opname-field-note-wide{grid-column:auto;}
+  #page-opname .opname-summary{grid-column:auto;grid-template-columns:1fr;padding:9px;gap:8px;}
+  #page-opname .opname-summary > div{padding:11px 12px;}
+  #page-opname .opname-summary strong{font-size:23px;}
+  #page-opname .opname-form-actions{grid-column:auto;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  #page-opname .opname-form-actions .btn{width:100%;justify-content:center;}
+  #page-opname .opname-history-table{border:0;overflow:visible;background:transparent;}
+  #page-opname .opname-history-head{display:none !important;}
+  #page-opname #opnameHistoryRows{display:grid;gap:12px;}
+  #page-opname .opname-history-row{
+    min-width:0;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:0;
+    padding:0;
+    border:1px solid var(--border);
+    border-radius:18px;
+    overflow:hidden;
+    background:#fff;
+    box-shadow:0 8px 24px rgba(15,23,42,.05);
+  }
+  #page-opname .opname-history-row > span{
+    position:relative;
+    min-height:74px;
+    padding:27px 13px 12px;
+    border-right:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  #page-opname .opname-history-row > span:nth-child(even){border-right:0;}
+  #page-opname .opname-history-row > [data-label]::before{
+    content:attr(data-label);
+    position:absolute;
+    top:9px;
+    left:13px;
+    color:#667085;
+    font-size:9px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.07em;
+  }
+  #page-opname .opname-history-item{grid-column:1 / -1;grid-row:1;border-right:0 !important;}
+  #page-opname .opname-history-date{grid-column:1;grid-row:2;}
+  #page-opname .opname-history-officer{grid-column:2;grid-row:2;}
+  #page-opname .opname-history-row > .opname-history-number:nth-of-type(3){grid-column:1;grid-row:3;}
+  #page-opname .opname-history-row > .opname-history-number:nth-of-type(4){grid-column:2;grid-row:3;}
+  #page-opname .opname-history-diff{grid-column:1;grid-row:4;}
+  #page-opname .opname-history-value{grid-column:2;grid-row:4;}
+  #page-opname .opname-history-note{grid-column:1 / -1;grid-row:5;border-right:0 !important;border-bottom:0 !important;min-height:68px !important;}
+  #page-opname .opname-history-number,
+  #page-opname .opname-history-diff{text-align:left;align-items:flex-start;}
+  #page-opname .opname-history-empty{padding:22px;border:1px solid var(--border);border-radius:18px;background:#fff;}
+}
+@media(max-width:420px){
+  #page-opname .opname-panel-head,
+  #page-opname .opname-history-title{display:grid;grid-template-columns:1fr;}
+  #page-opname .opname-panel-head .pill,
+  #page-opname .opname-history-title .pill{justify-self:start;}
+  #page-opname .opname-form-actions{grid-template-columns:1fr;}
+  #page-opname .opname-history-row{grid-template-columns:1fr;}
+  #page-opname .opname-history-row > span{grid-column:1 !important;grid-row:auto !important;border-right:0 !important;}
+  #page-opname .opname-history-row > span:last-child{border-bottom:0;}
+}
+
+
+/* ===== CABE v15: Stok Barang + detail per periode ===== */
+#page-stok .stock-summary-panel,
+#page-stok .stock-detail-panel{
+  overflow:hidden;
+}
+#page-stok .stock-summary-panel .panel-head,
+#page-stok .stock-detail-panel .panel-head{
+  align-items:center;
+}
+#page-stok .stock-card{
+  min-height:150px;
+  padding:22px 16px;
+}
+#page-stok .stock-card strong{
+  margin-top:15px;
+}
+#page-stok .stock-detail-panel{
+  margin-top:18px;
+}
+#page-stok .stock-detail-filter{
+  display:grid;
+  grid-template-columns:minmax(190px,1fr) minmax(190px,1fr) auto;
+  gap:12px;
+  align-items:end;
+  padding:14px;
+  margin-bottom:12px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#f8fafc;
+}
+#page-stok .stock-detail-filter label{
+  min-width:0;
+}
+#page-stok .stock-detail-filter-actions{
+  display:flex;
+  gap:9px;
+  align-items:center;
+  justify-content:flex-end;
+}
+#page-stok .stock-detail-range-note{
+  display:grid;
+  grid-template-columns:minmax(0,1.4fr) minmax(145px,.55fr) minmax(145px,.55fr);
+  gap:8px;
+  margin-bottom:12px;
+  padding:10px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#eef4ff,#f8fbff);
+  border:1px solid #d8e5fb;
+}
+#page-stok .stock-detail-range-note > div{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:9px 11px;
+  border-radius:12px;
+  background:rgba(255,255,255,.82);
+  text-align:center;
+}
+#page-stok .stock-detail-range-note span{
+  color:#667085;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+#page-stok .stock-detail-range-note strong{
+  display:block;
+  margin-top:4px;
+  color:#344054;
+  font-size:14px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+#page-stok .stock-detail-range-note .stock-detail-total-in strong{color:var(--green);}
+#page-stok .stock-detail-range-note .stock-detail-total-out strong{color:var(--red);}
+#page-stok .stock-detail-table{
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#fff;
+}
+#page-stok .stock-detail-row{
+  display:grid;
+  grid-template-columns:64px minmax(190px,1.55fr) minmax(130px,.72fr) minmax(130px,.72fr);
+  gap:10px;
+  align-items:center;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+}
+#page-stok #stockDetailRows .stock-detail-row:last-child{
+  border-bottom:0;
+}
+#page-stok .stock-detail-head{
+  background:#f2f4f7;
+  color:#475467;
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+#page-stok .stock-detail-row > span{
+  min-width:0;
+  font-size:13px;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+}
+#page-stok .stock-detail-no{
+  text-align:center;
+  color:var(--blue);
+  font-weight:950;
+}
+#page-stok .stock-detail-name strong{
+  display:block;
+  color:#172033;
+  font-size:14px;
+}
+#page-stok .stock-detail-name small{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:750;
+}
+#page-stok .stock-detail-qty{
+  text-align:center;
+  font-weight:950;
+  font-variant-numeric:tabular-nums;
+}
+@media(min-width:821px){
+  #page-stok .stock-detail-head > span:nth-child(1),
+  #page-stok .stock-detail-head > span:nth-child(3),
+  #page-stok .stock-detail-head > span:nth-child(4){
+    text-align:center;
+  }
+  #page-stok .stock-detail-qty{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    white-space:nowrap;
+  }
+}
+#page-stok .stock-detail-qty.in{color:var(--green);}
+#page-stok .stock-detail-qty.out{color:var(--red);}
+#page-stok .stock-detail-empty{
+  padding:28px 18px;
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+}
+
+@media(max-width:1000px){
+  #page-stok .stock-detail-filter{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  #page-stok .stock-detail-filter-actions{
+    grid-column:1 / -1;
+    justify-content:flex-start;
+  }
+}
+
+@media(max-width:820px){
+  #page-stok .stock-summary-panel,
+  #page-stok .stock-detail-panel{
+    padding:17px;
+    border-radius:22px;
+  }
+  #page-stok .stock-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+  #page-stok .stock-card{
+    min-height:132px;
+    padding:17px 12px;
+    border-radius:17px;
+  }
+  #page-stok .stock-card h4{
+    font-size:18px;
+  }
+  #page-stok .stock-card strong{
+    font-size:29px;
+  }
+  #page-stok .stock-detail-filter{
+    grid-template-columns:1fr;
+    gap:11px;
+    padding:12px;
+  }
+  #page-stok .stock-detail-filter-actions{
+    grid-column:auto;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:9px;
+  }
+  #page-stok .stock-detail-filter-actions .btn{
+    width:100%;
+    justify-content:center;
+  }
+  #page-stok .stock-detail-range-note{
+    grid-template-columns:1fr 1fr;
+  }
+  #page-stok .stock-detail-range-note .stock-detail-period{
+    grid-column:1 / -1;
+  }
+  #page-stok .stock-detail-table{
+    border:0;
+    border-radius:0;
+    overflow:visible;
+    background:transparent;
+  }
+  #page-stok .stock-detail-head{
+    display:none !important;
+  }
+  #page-stok #stockDetailRows{
+    display:grid;
+    gap:10px;
+  }
+  #page-stok #stockDetailRows .stock-detail-row{
+    display:grid;
+    grid-template-columns:58px minmax(0,1fr) minmax(0,1fr);
+    gap:0;
+    padding:0;
+    overflow:hidden;
+    border:1px solid var(--border);
+    border-radius:17px;
+    background:#fff;
+    box-shadow:0 7px 22px rgba(15,23,42,.05);
+  }
+  #page-stok #stockDetailRows .stock-detail-row > span{
+    position:relative;
+    min-height:68px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:25px 12px 10px;
+    border-right:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    text-align:left;
+  }
+  #page-stok #stockDetailRows .stock-detail-row > [data-label]::before{
+    content:attr(data-label);
+    position:absolute;
+    top:8px;
+    left:12px;
+    color:#667085;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+  #page-stok #stockDetailRows .stock-detail-no{
+    grid-column:1;
+    grid-row:1 / 3;
+    min-height:136px;
+    align-items:center;
+    padding:22px 8px 10px;
+    border-bottom:0;
+    background:#eef4ff;
+    color:var(--blue);
+    font-size:21px;
+    text-align:center;
+  }
+  #page-stok #stockDetailRows .stock-detail-no::before{
+    left:50%;
+    transform:translateX(-50%);
+  }
+  #page-stok #stockDetailRows .stock-detail-name{
+    grid-column:2 / 4;
+    grid-row:1;
+    border-right:0;
+  }
+  #page-stok #stockDetailRows .stock-detail-qty.in{
+    grid-column:2;
+    grid-row:2;
+  }
+  #page-stok #stockDetailRows .stock-detail-qty.out{
+    grid-column:3;
+    grid-row:2;
+    border-right:0;
+  }
+  #page-stok #stockDetailRows .stock-detail-row > span:nth-last-child(-n+2){
+    border-bottom:0;
+  }
+  #page-stok .stock-detail-empty{
+    border:1px solid var(--border);
+    border-radius:17px;
+    background:#fff;
+  }
+}
+
+@media(max-width:480px){
+  #page-stok .stock-summary-panel .panel-head,
+  #page-stok .stock-detail-panel .panel-head{
+    display:grid;
+    grid-template-columns:1fr auto;
+    align-items:start;
+    gap:10px;
+  }
+  #page-stok .stock-summary-panel .panel-head p,
+  #page-stok .stock-detail-panel .panel-head p{
+    font-size:13px;
+  }
+  #page-stok .stock-grid{
+    grid-template-columns:1fr;
+  }
+  #page-stok .stock-card{
+    min-height:124px;
+  }
+  #page-stok .stock-detail-filter-actions{
+    grid-template-columns:1fr;
+  }
+  #page-stok .stock-detail-range-note{
+    grid-template-columns:1fr;
+  }
+  #page-stok .stock-detail-range-note .stock-detail-period{
+    grid-column:auto;
+  }
+}
+
+@media(max-width:360px){
+  #page-stok #stockDetailRows .stock-detail-row{
+    grid-template-columns:50px minmax(0,1fr);
+  }
+  #page-stok #stockDetailRows .stock-detail-no{
+    grid-column:1;
+    grid-row:1 / 4;
+    min-height:204px;
+  }
+  #page-stok #stockDetailRows .stock-detail-name,
+  #page-stok #stockDetailRows .stock-detail-qty.in,
+  #page-stok #stockDetailRows .stock-detail-qty.out{
+    grid-column:2;
+    grid-row:auto;
+    border-right:0;
+  }
+  #page-stok #stockDetailRows .stock-detail-qty.in{
+    border-bottom:1px solid var(--border) !important;
+  }
+}
+
+
+
+/* =========================================================
+   V17 - MOTION SYSTEM, LOADING, MICROINTERACTIONS
+   ========================================================= */
+:root{
+  --motion-fast:180ms;
+  --motion-base:280ms;
+  --motion-slow:560ms;
+  --motion-ease:cubic-bezier(.22,1,.36,1);
+}
+
+.btn,
+.nav-link,
+.mobile-link,
+.fab-link,
+.quick-actions button,
+.expense-action-btn,
+.cash-row-detail-btn,
+.remove-item-btn{
+  position:relative;
+  overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-base) ease,
+    background-color var(--motion-base) ease,
+    border-color var(--motion-base) ease,
+    color var(--motion-base) ease,
+    opacity var(--motion-base) ease;
+}
+
+.btn:active:not(:disabled),
+.nav-link:active,
+.mobile-link:active,
+.fab-link:active,
+.quick-actions button:active,
+.expense-action-btn:active,
+.cash-row-detail-btn:active,
+.remove-item-btn:active{
+  transform:translateY(0) scale(.965);
+}
+
+.btn:focus-visible,
+.nav-link:focus-visible,
+.mobile-link:focus-visible,
+.fab-link:focus-visible,
+.expense-action-btn:focus-visible,
+.cash-row-detail-btn:focus-visible{
+  outline:3px solid rgba(11,63,156,.2);
+  outline-offset:3px;
+}
+
+.btn.is-loading,
+.expense-action-btn.is-loading,
+.cash-row-detail-btn.is-loading{
+  pointer-events:none;
+  cursor:wait;
+}
+.btn.is-loading::before,
+.expense-action-btn.is-loading::before,
+.cash-row-detail-btn.is-loading::before{
+  content:"";
+  display:inline-block;
+  width:16px;
+  height:16px;
+  margin-right:9px;
+  vertical-align:-3px;
+  border:2px solid currentColor;
+  border-right-color:transparent;
+  border-radius:50%;
+  animation:cabeButtonSpin .72s linear infinite;
+}
+.btn.is-success{
+  animation:cabeButtonSuccess .56s var(--motion-ease);
+}
+
+@keyframes cabeButtonSpin{to{transform:rotate(360deg)}}
+@keyframes cabeButtonSuccess{
+  0%{transform:scale(.96)}
+  55%{transform:scale(1.045)}
+  100%{transform:scale(1)}
+}
+
+.page.active{
+  animation:cabePageReveal .34s var(--motion-ease) both;
+}
+.page.page-entering{
+  animation:cabePageReveal .34s var(--motion-ease) both;
+}
+@keyframes cabePageReveal{
+  from{opacity:0;transform:translateY(14px) scale(.995);filter:blur(2px)}
+  to{opacity:1;transform:none;filter:none}
+}
+
+.motion-card-enter{
+  opacity:0;
+  transform:translateY(16px) scale(.985);
+  animation:cabeCardEnter .46s var(--motion-ease) var(--motion-delay,0ms) both;
+}
+@keyframes cabeCardEnter{
+  0%{opacity:0;transform:translateY(16px) scale(.985)}
+  100%{opacity:1;transform:none}
+}
+
+.motion-highlight{
+  animation:cabeRowHighlight 1.35s var(--motion-ease) both;
+}
+@keyframes cabeRowHighlight{
+  0%{box-shadow:0 0 0 0 rgba(3,152,85,.28);background:#ecfdf3}
+  45%{box-shadow:0 0 0 8px rgba(3,152,85,.08);background:#f0fdf4}
+  100%{box-shadow:none;background:inherit}
+}
+
+.motion-remove{
+  animation:cabeRowRemove .3s ease forwards;
+  pointer-events:none;
+}
+@keyframes cabeRowRemove{
+  to{opacity:0;transform:translateX(18px) scale(.985);max-height:0;margin:0;padding-top:0;padding-bottom:0;border-width:0}
+}
+
+.form-success-pulse{
+  animation:cabeFormSuccess .9s var(--motion-ease);
+}
+@keyframes cabeFormSuccess{
+  0%{box-shadow:0 0 0 0 rgba(3,152,85,0)}
+  35%{box-shadow:0 0 0 6px rgba(3,152,85,.14)}
+  100%{box-shadow:0 0 0 0 rgba(3,152,85,0)}
+}
+
+.form-edit-focus{
+  animation:cabeEditFocus .8s var(--motion-ease);
+}
+@keyframes cabeEditFocus{
+  0%{box-shadow:0 0 0 0 rgba(11,63,156,0)}
+  40%{box-shadow:0 0 0 7px rgba(11,63,156,.12)}
+  100%{box-shadow:0 0 0 0 rgba(11,63,156,0)}
+}
+
+.page.is-data-loading .kpi-card,
+.page.is-data-loading .panel,
+.page.is-data-loading .stock-card,
+.page.is-data-loading .cash-summary article,
+.page.is-data-loading .cash-row-card,
+.page.is-data-loading .list-item{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  pointer-events:none;
+}
+.page.is-data-loading .kpi-card::after,
+.page.is-data-loading .panel::after,
+.page.is-data-loading .stock-card::after,
+.page.is-data-loading .cash-summary article::after,
+.page.is-data-loading .cash-row-card::after,
+.page.is-data-loading .list-item::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:30;
+  background:
+    linear-gradient(100deg,rgba(255,255,255,.3) 18%,rgba(219,231,251,.86) 40%,rgba(255,255,255,.35) 62%);
+  background-size:220% 100%;
+  animation:cabeSkeleton 1.05s linear infinite;
+  backdrop-filter:blur(.7px);
+}
+@keyframes cabeSkeleton{to{background-position-x:-220%}}
+
+.operation-loader{
+  position:fixed;
+  inset:0;
+  z-index:5000;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(15,23,42,.18);
+  backdrop-filter:blur(2px);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .2s ease,visibility .2s ease;
+}
+.operation-loader.show{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+.operation-loader-card{
+  min-width:min(310px,calc(100vw - 34px));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:13px;
+  padding:16px 19px;
+  border:1px solid rgba(255,255,255,.78);
+  border-radius:18px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 24px 70px rgba(16,24,40,.24);
+  color:#344054;
+  font-weight:900;
+  transform:translateY(12px) scale(.97);
+  transition:transform .25s var(--motion-ease);
+}
+.operation-loader.show .operation-loader-card{transform:none}
+.operation-loader-spinner{
+  width:23px;
+  height:23px;
+  flex:0 0 23px;
+  border:3px solid #dbe7fb;
+  border-top-color:var(--blue);
+  border-radius:50%;
+  animation:cabeButtonSpin .72s linear infinite;
+}
+
+input[type="checkbox"]{
+  accent-color:var(--blue);
+  transition:transform var(--motion-fast) var(--motion-ease),filter var(--motion-base) ease;
+}
+input[type="checkbox"]:hover{filter:drop-shadow(0 3px 6px rgba(11,63,156,.18))}
+input[type="checkbox"]:checked{animation:cabeCheckboxPop .3s var(--motion-ease)}
+@keyframes cabeCheckboxPop{
+  0%{transform:scale(.72)}
+  65%{transform:scale(1.18)}
+  100%{transform:scale(1)}
+}
+
+.cash-row-card,
+.nota-history-row,
+.expense-history-row,
+.debt-history-row,
+.opname-history-row{
+  transition:background-color .28s ease,border-color .28s ease,box-shadow .28s ease,transform .28s var(--motion-ease),opacity .28s ease;
+}
+.cash-row-card:has(.cash-row-check-hc input:checked){
+  border-color:#b8d3ff;
+  box-shadow:0 9px 24px rgba(11,63,156,.08);
+}
+.cash-row-card:has(.cash-row-check-lc input:checked){
+  background:#f6fef9;
+  border-color:#abefc6;
+}
+.nota-history-row:has(input[data-nota-hc]:checked){
+  background:#eef4ff;
+  box-shadow:inset 4px 0 0 var(--blue);
+}
+.cash-row-card.is-updating,
+.nota-history-row.is-updating{
+  opacity:.65;
+  transform:scale(.995);
+  cursor:wait;
+}
+
+.number-animating{
+  font-variant-numeric:tabular-nums;
+  will-change:contents;
+}
+
+@media (max-width:820px){
+  .motion-card-enter{animation-duration:.38s}
+  .operation-loader-card{min-width:min(280px,calc(100vw - 28px));padding:14px 16px;border-radius:16px}
+  .page.is-data-loading .panel::after{border-radius:inherit}
+}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+  .motion-card-enter{opacity:1;transform:none}
+}
+
 </style>
 </head>
 
@@ -3858,6 +5668,27 @@ input[type="date"]::-webkit-datetime-edit-year-field{
 
             <div id="terjualItems" class="items-list"></div>
 
+            <section class="latest-profit-card" aria-labelledby="latestProfitTitle">
+              <div class="panel-head">
+                <div>
+                  <h3 id="latestProfitTitle">Harga &amp; Laba Terakhir</h3>
+                  <p>Referensi HPP dan laba dari penjualan paling baru untuk setiap barang.</p>
+                </div>
+                <span class="pill blue">Terakhir</span>
+              </div>
+
+              <div class="latest-profit-table" aria-live="polite">
+                <div class="latest-profit-row latest-profit-head" aria-hidden="true">
+                  <span>Nama Barang</span>
+                  <span>HPP/Kg</span>
+                  <span>Laba/Kg</span>
+                </div>
+                <div id="latestSaleProfitList">
+                  <div class="latest-profit-empty">Belum ada data barang terjual.</div>
+                </div>
+              </div>
+            </section>
+
             <div class="action-row">
               <button class="btn btn-primary" type="submit">Simpan Semua Penjualan</button>
               <button class="btn btn-soft" type="button" id="resetTerjualBtn">Reset</button>
@@ -3867,7 +5698,7 @@ input[type="date"]::-webkit-datetime-edit-year-field{
       </section>
 
       <section class="page" id="page-stok">
-        <article class="panel">
+        <article class="panel stock-summary-panel">
           <div class="panel-head">
             <div>
               <h3>Stok Barang</h3>
@@ -3877,176 +5708,298 @@ input[type="date"]::-webkit-datetime-edit-year-field{
           </div>
           <div id="stockList" class="stock-grid"></div>
         </article>
+
+        <article class="panel stock-detail-panel">
+          <div class="panel-head">
+            <div>
+              <h3>Stok Detail</h3>
+              <p>Jumlah barang masuk dan keluar berdasarkan periode tanggal.</p>
+            </div>
+            <span class="pill blue" id="stockDetailCount">0 barang</span>
+          </div>
+
+          <div class="stock-detail-filter">
+            <label>Tanggal Awal
+              <input type="date" id="stockDetailStartDate" />
+            </label>
+            <label>Tanggal Akhir
+              <input type="date" id="stockDetailEndDate" />
+            </label>
+            <div class="stock-detail-filter-actions">
+              <button class="btn btn-primary" id="applyStockDetailBtn" type="button">Terapkan</button>
+              <button class="btn btn-soft" id="stockDetailThisMonthBtn" type="button">Bulan Ini</button>
+            </div>
+          </div>
+
+          <div class="stock-detail-range-note" id="stockDetailRangeNote">
+            <div class="stock-detail-period"><span>Periode</span><strong>-</strong></div>
+            <div class="stock-detail-total-in"><span>Total Masuk</span><strong>0 Kg</strong></div>
+            <div class="stock-detail-total-out"><span>Total Keluar</span><strong>0 Kg</strong></div>
+          </div>
+
+          <div class="stock-detail-table" aria-live="polite">
+            <div class="stock-detail-row stock-detail-head" aria-hidden="true">
+              <span>No</span>
+              <span>Nama Barang</span>
+              <span>Qty Masuk</span>
+              <span>Qty Keluar</span>
+            </div>
+            <div id="stockDetailRows">
+              <div class="stock-detail-empty">Memuat detail stok...</div>
+            </div>
+          </div>
+        </article>
       </section>
 
       <section class="page" id="page-opname">
-        <div class="content-grid">
-          <article class="panel">
-            <div class="panel-head">
-              <div>
-                <h3>Stok Opname</h3>
-                <p>Samakan stok sistem dengan jumlah fisik yang tersedia.</p>
-              </div>
-              <span class="pill blue">Pemeriksaan Stok</span>
+        <article class="panel opname-entry-panel">
+          <div class="panel-head opname-panel-head">
+            <div>
+              <h3>Stok Opname</h3>
+              <p>Samakan stok sistem dengan jumlah fisik yang tersedia.</p>
             </div>
+            <span class="pill blue">Pemeriksaan Stok</span>
+          </div>
 
-            <form id="formStokOpname" class="form-grid one-col">
-              <label>Tanggal
-                <input type="date" name="tanggal" required />
-              </label>
-              <label>Nama Barang
-                <select name="namaBarang" id="opnameBarangSelect" required>
-                  <option value="">Pilih barang</option>
-                </select>
-              </label>
-              <label>Stok Sistem
-                <input type="text" id="opnameStokSistem" readonly placeholder="0" />
-              </label>
-              <label>Stok Fisik
-                <input type="number" name="stokFisik" id="opnameStokFisik" min="0" step="0.01" inputmode="decimal" placeholder="0" required />
-              </label>
-              <label>Harga/Kg
-                <input type="text" name="hpp" id="opnameHargaKg" class="money-input" data-money inputmode="numeric" placeholder="Rp. 0" readonly />
-                <small class="opname-field-note">Diambil otomatis dari HPP terakhir, sama seperti saat penjualan.</small>
-              </label>
-              <label>Petugas
-                <input type="text" name="petugas" placeholder="Nama petugas" required />
-              </label>
-              <label>Keterangan
-                <textarea name="keterangan" rows="3" placeholder="Opsional"></textarea>
-              </label>
+          <form id="formStokOpname" class="opname-form-grid">
+            <label class="opname-field-date">Tanggal
+              <input type="date" name="tanggal" required />
+            </label>
+            <label class="opname-field-item">Nama Barang
+              <select name="namaBarang" id="opnameBarangSelect" required>
+                <option value="">Pilih barang</option>
+              </select>
+            </label>
+            <label>Stok Sistem
+              <input type="text" id="opnameStokSistem" readonly placeholder="0" />
+            </label>
+            <label>Stok Fisik
+              <input type="number" name="stokFisik" id="opnameStokFisik" min="0" step="0.01" inputmode="decimal" placeholder="0" required />
+            </label>
+            <label>Harga/Kg
+              <input type="text" name="hpp" id="opnameHargaKg" class="money-input" data-money inputmode="numeric" placeholder="Rp. 0" readonly />
+              <small class="opname-field-note">Otomatis dari HPP terakhir.</small>
+            </label>
+            <label>Petugas
+              <input type="text" name="petugas" placeholder="Nama petugas" required />
+            </label>
+            <label class="opname-field-note-wide">Keterangan
+              <textarea name="keterangan" rows="3" placeholder="Opsional"></textarea>
+            </label>
 
-              <div class="opname-summary">
+            <div class="opname-summary" aria-live="polite">
+              <div class="opname-summary-primary">
                 <span>Selisih</span>
                 <strong id="opnameSelisih">0</strong>
+              </div>
+              <div class="opname-summary-info">
+                <span>Status</span>
                 <small id="opnameStatus">Pilih barang dan isi stok fisik.</small>
-                <small id="opnameNilaiSelisih">Nilai selisih: Rp. 0</small>
               </div>
-
-              <div class="action-row">
-                <button class="btn btn-primary" type="submit">Simpan Stok Opname</button>
-                <button class="btn btn-soft" type="reset">Reset</button>
-              </div>
-            </form>
-          </article>
-
-          <article class="panel">
-            <div class="panel-head">
-              <div>
-                <h3>Panduan Pemeriksaan</h3>
-                <p>Hitung fisik barang secara nyata sebelum menyimpan.</p>
+              <div class="opname-summary-value">
+                <span>Nilai Selisih</span>
+                <small id="opnameNilaiSelisih">Rp. 0</small>
               </div>
             </div>
-            <div class="list">
-              <div class="list-item"><div><strong>Stok Fisik Lebih Besar</strong><span>Selisih positif akan menambah stok.</span></div><span class="badge green">+</span></div>
-              <div class="list-item"><div><strong>Stok Fisik Lebih Kecil</strong><span>Selisih negatif akan mengurangi stok.</span></div><span class="badge red">−</span></div>
-              <div class="list-item"><div><strong>Stok Sama</strong><span>Tidak ada perubahan stok.</span></div><span class="badge">0</span></div>
+
+            <div class="action-row opname-form-actions">
+              <button class="btn btn-primary" type="submit">Simpan Stok Opname</button>
+              <button class="btn btn-soft" type="reset">Reset</button>
             </div>
-          </article>
-        </div>
+          </form>
+        </article>
+
+        <article class="panel opname-history-panel">
+          <div class="panel-head opname-history-title">
+            <div>
+              <h3>Riwayat Opname</h3>
+              <p>Catatan pemeriksaan stok terbaru untuk memantau selisih fisik dan sistem.</p>
+            </div>
+            <span class="pill" id="opnameHistoryCount">0 data</span>
+          </div>
+
+          <div class="opname-history-table">
+            <div class="opname-history-row opname-history-head" aria-hidden="true">
+              <span>Tanggal</span>
+              <span>Barang</span>
+              <span>Stok Sistem</span>
+              <span>Stok Fisik</span>
+              <span>Selisih</span>
+              <span>Nilai Selisih</span>
+              <span>Petugas</span>
+              <span>Keterangan</span>
+            </div>
+            <div id="opnameHistoryRows">
+              <div class="opname-history-empty">Belum ada riwayat stok opname.</div>
+            </div>
+          </div>
+        </article>
       </section>
 
       <section class="page" id="page-hutang">
-        <div class="content-grid">
-          <article class="panel">
-            <div class="panel-head">
+        <article class="panel debt-payment-panel">
+          <div class="panel-head debt-payment-head">
+            <div>
+              <h3>Bayar Hutang</h3>
+              <p>Catat pembayaran hutang supplier. Pilih nota agar supplier dan sisa hutang terisi otomatis.</p>
+            </div>
+            <span class="pill blue">Pembayaran</span>
+          </div>
+
+          <form id="formBayarHutang" class="form-grid debt-payment-form">
+            <label>Tanggal Bayar
+              <input type="date" name="tanggalBayar" required />
+            </label>
+            <label class="debt-field-span-2">No Nota
+              <select name="noNota" id="debtNoteSelect" required></select>
+            </label>
+            <label>Nama Supplier
+              <input type="text" name="supplier" id="debtSupplierInput" readonly required />
+            </label>
+            <label>Jumlah Hutang
+              <input type="text" name="jumlahHutang" id="debtAmountInput" class="money-input" data-money readonly required />
+            </label>
+            <label>Jumlah Bayar
+              <input type="text" name="jumlahBayar" inputmode="numeric" class="money-input" data-money placeholder="Rp. 0" required />
+            </label>
+            <label>Metode
+              <select name="metodeBayar" required>
+                <option value="CASH">CASH</option>
+                <option value="TRANSFER" selected>TRANSFER</option>
+                <option value="QRIS">QRIS</option>
+              </select>
+            </label>
+            <label class="debt-field-span-2">Keterangan
+              <input type="text" name="keterangan" placeholder="Contoh: pembayaran sebagian nota" />
+            </label>
+            <div class="action-row debt-form-actions">
+              <button class="btn btn-primary" type="submit">Simpan Pembayaran</button>
+              <button class="btn btn-soft" type="reset">Reset</button>
+            </div>
+          </form>
+        </article>
+
+        <div class="debt-bottom-grid">
+          <article class="panel debt-list-panel">
+            <div class="panel-head debt-card-head">
               <div>
                 <h3>Hutang Supplier</h3>
-                <p>Nota pembelian yang belum lunas.</p>
+                <p>Nota pembelian yang masih memiliki sisa hutang.</p>
               </div>
-              <span class="pill red">Belum Lunas</span>
+              <span class="pill red" id="debtOpenCount">0 nota</span>
             </div>
-            <div id="debtList" class="list"></div>
+            <div class="debt-total-strip">
+              <span>Total sisa hutang</span>
+              <strong id="debtOutstandingTotal">Rp. 0</strong>
+            </div>
+            <div id="debtList" class="debt-card-list"></div>
           </article>
 
-          <article class="panel">
-            <div class="panel-head">
+          <article class="panel debt-history-panel">
+            <div class="panel-head debt-card-head">
               <div>
-                <h3>Bayar Hutang</h3>
-                <p>Catat pembayaran hutang supplier.</p>
+                <h3>Riwayat Pembayaran</h3>
+                <p>Pembayaran hutang terbaru yang sudah disimpan.</p>
               </div>
+              <span class="pill" id="debtPaymentHistoryCount">0 data</span>
             </div>
-
-            <form id="formBayarHutang" class="form-grid one-col">
-              <label>Tanggal Bayar
-                <input type="date" name="tanggalBayar" required />
-              </label>
-              <label>No Nota
-                <select name="noNota" id="debtNoteSelect" required></select>
-              </label>
-              <label>Nama Supplier
-                <input type="text" name="supplier" id="debtSupplierInput" readonly required />
-              </label>
-              <label>Jumlah Hutang
-                <input type="text" name="jumlahHutang" id="debtAmountInput" class="money-input" data-money readonly required />
-              </label>
-              <label>Jumlah Bayar
-                <input type="text" name="jumlahBayar" inputmode="numeric" class="money-input" data-money placeholder="Rp. 0" required />
-              </label>
-              <label>Metode
-                <select name="metodeBayar" required>
-                  <option value="CASH">CASH</option>
-                  <option value="TRANSFER" selected>TRANSFER</option>
-                  <option value="QRIS">QRIS</option>
-                </select>
-              </label>
-              <label>Keterangan
-                <input type="text" name="keterangan" placeholder="Opsional" />
-              </label>
-              <div class="action-row">
-                <button class="btn btn-primary" type="submit">Simpan</button>
-                <button class="btn btn-soft" type="reset">Reset</button>
+            <div class="debt-history-table">
+              <div class="debt-history-row debt-history-head">
+                <span>Tanggal</span>
+                <span>Supplier & Nota</span>
+                <span>Jumlah</span>
+                <span>Metode</span>
+                <span>Keterangan</span>
               </div>
-            </form>
+              <div id="debtPaymentHistoryRows"></div>
+            </div>
           </article>
         </div>
       </section>
 
 
       <section class="page" id="page-pengeluaran">
-        <article class="panel">
-          <div class="panel-head">
+        <article class="panel expense-entry-panel">
+          <div class="panel-head expense-panel-head">
             <div>
-              <h3>Pengeluaran</h3>
-              <p>Catat biaya operasional agar arus kas harian tetap rapi.</p>
+              <h3>Input Pengeluaran</h3>
+              <p>Catat biaya operasional, lalu koreksi dari riwayat bila ada data yang perlu diperbaiki.</p>
             </div>
             <span class="pill red">Biaya</span>
           </div>
 
-          <form id="formPengeluaran" class="form-grid one-col pengeluaran-form">
-            <label>Tanggal
-              <input type="date" name="tanggal" required />
-            </label>
-            <label>Kategori
-              <select name="kategori" required>
-                <option value="">Pilih kategori</option>
-                <option value="Admin">Admin</option>
-                <option value="Transport">Transport</option>
-                <option value="Operasional">Operasional</option>
-                <option value="Bensin">Bensin</option>
-                <option value="Kuli">Kuli</option>
-                <option value="Parkir">Parkir</option>
-                <option value="Lain-lain">Lain-lain</option>
-              </select>
-            </label>
-            <label>Jumlah
-              <input type="text" name="jumlah" inputmode="numeric" class="money-input" data-money placeholder="Rp. 0" required />
-            </label>
-            <label>Metode Bayar
-              <select name="metodeBayar" required>
-                <option value="CASH">CASH</option>
-                <option value="TRANSFER">TRANSFER</option>
-                <option value="QRIS">QRIS</option>
-              </select>
-            </label>
-            <label>Keterangan
-              <input type="text" name="keterangan" placeholder="Contoh: bensin belanja pasar" />
-            </label>
-            <div class="action-row">
-              <button class="btn btn-primary" type="submit">Simpan</button>
-              <button class="btn btn-soft" type="reset">Reset</button>
+          <div class="expense-form-shell">
+            <form id="formPengeluaran" class="form-grid expense-form">
+              <input type="hidden" name="id" id="pengeluaranEditId" />
+
+              <label>Tanggal
+                <input type="date" name="tanggal" required />
+              </label>
+              <label>Kategori
+                <select name="kategori" required>
+                  <option value="">Pilih kategori</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Operasional">Operasional</option>
+                  <option value="Bensin">Bensin</option>
+                  <option value="Kuli">Kuli</option>
+                  <option value="Parkir">Parkir</option>
+                  <option value="Lain-lain">Lain-lain</option>
+                </select>
+              </label>
+              <label>Jumlah
+                <input type="text" name="jumlah" inputmode="numeric" class="money-input" data-money placeholder="Rp. 0" required />
+              </label>
+              <label>Metode Bayar
+                <select name="metodeBayar" required>
+                  <option value="CASH">CASH</option>
+                  <option value="TRANSFER">TRANSFER</option>
+                  <option value="QRIS">QRIS</option>
+                </select>
+              </label>
+              <label class="wide">Keterangan
+                <input type="text" name="keterangan" placeholder="Contoh: bensin belanja pasar" />
+              </label>
+
+              <div id="pengeluaranEditNotice" class="expense-edit-notice wide" hidden>
+                <div>
+                  <strong>Mode perbaikan aktif</strong>
+                  <span>Ubah data yang salah, lalu tekan Simpan Perubahan.</span>
+                </div>
+                <span id="pengeluaranEditLabel" class="expense-edit-id">-</span>
+              </div>
+
+              <div class="action-row expense-action-row wide">
+                <button class="btn btn-primary" id="pengeluaranSubmitBtn" type="submit">Simpan Pengeluaran</button>
+                <button class="btn btn-soft" id="pengeluaranResetBtn" type="reset">Reset</button>
+                <button class="btn btn-soft expense-cancel-edit" id="pengeluaranCancelEditBtn" type="button" hidden>Batal Edit</button>
+              </div>
+            </form>
+          </div>
+        </article>
+
+        <article class="panel expense-history-panel">
+          <div class="panel-head expense-history-headline">
+            <div>
+              <h3>Riwayat Pengeluaran</h3>
+              <p>Gunakan Edit untuk memperbaiki data, atau Hapus jika transaksi memang salah.</p>
             </div>
-          </form>
+            <span class="pill" id="pengeluaranHistoryCount">0 data</span>
+          </div>
+
+          <div class="expense-history-table" aria-label="Riwayat pengeluaran">
+            <div class="expense-history-row expense-history-head" aria-hidden="true">
+              <span>Tanggal</span>
+              <span>Kategori</span>
+              <span>Jumlah</span>
+              <span>Metode</span>
+              <span>Keterangan</span>
+              <span>Aksi</span>
+            </div>
+            <div id="pengeluaranHistoryRows">
+              <div class="expense-history-empty">Belum ada riwayat pengeluaran.</div>
+            </div>
+          </div>
         </article>
       </section>
 
@@ -4139,6 +6092,17 @@ input[type="date"]::-webkit-datetime-edit-year-field{
             <span class="pill">Nota</span>
           </div>
 
+          <div class="nota-period-guide" id="notaPeriodGuide" aria-live="polite">
+            <div class="nota-period-copy">
+              <span>Nota terakhir</span>
+              <strong id="lastNotaPeriod">Belum ada nota yang dibuat.</strong>
+              <small id="nextNotaPeriod">Riwayat nota akan menjadi patokan periode berikutnya.</small>
+            </div>
+            <button class="btn btn-soft nota-period-use" type="button" id="useNextNotaPeriodBtn" hidden>
+              Pakai Periode Berikutnya
+            </button>
+          </div>
+
           <form id="formNota" class="form-grid">
             <label>Tanggal Awal
               <input type="date" name="tanggalAwal" required />
@@ -4157,6 +6121,27 @@ input[type="date"]::-webkit-datetime-edit-year-field{
             <pre id="waText">*Nota tanggal 01-10 Juli 2026*
 Total Rp0</pre>
             <a id="notaLink" href="#" target="_blank" rel="noopener" hidden>Buka PDF Nota</a>
+          </div>
+        </article>
+
+        <article class="panel nota-history-panel">
+          <div class="panel-head">
+            <div>
+              <h3>Riwayat Nota</h3>
+              <p>Riwayat tetap tersimpan. Centang saat sudah H.C, atau hilangkan centang jika statusnya perlu dikembalikan.</p>
+            </div>
+            <span class="pill">Riwayat</span>
+          </div>
+
+          <div class="nota-history-table" aria-live="polite">
+            <div class="nota-history-row nota-history-head" aria-hidden="true">
+              <span>Nota</span>
+              <span>Tanggal</span>
+              <span style="text-align:center">H.C</span>
+            </div>
+            <div id="notaHistoryRows">
+              <div class="nota-history-empty">Belum ada nota yang dibuat.</div>
+            </div>
           </div>
         </article>
       </section>
@@ -4299,8 +6284,31 @@ const demoData = {
     { kode: "JP", nama: "Jeruk Peras", stok: 4, satuan: "Kg", hpp: 7500, status: "MENIPIS" },
     { kode: "CK", nama: "Cabe Kriting", stok: 16, satuan: "Kg", hpp: 15000, status: "AMAN" }
   ],
+  stockDetail: {
+    startDate: "2026-07-01",
+    endDate: "2026-07-31",
+    label: "01/07/2026 - 31/07/2026",
+    totalMasuk: 252,
+    totalKeluar: 210,
+    totalUnit: "Kg",
+    rows: [
+      { kode: "CI", nama: "Cabe Ijo", satuan: "Kg", qtyMasuk: 200, qtyKeluar: 180 },
+      { kode: "RP", nama: "Rawit Putih", satuan: "Kg", qtyMasuk: 22, qtyKeluar: 11 },
+      { kode: "TI", nama: "Tomat Ijo", satuan: "Kg", qtyMasuk: 18, qtyKeluar: 12 },
+      { kode: "JP", nama: "Jeruk Peras", satuan: "Kg", qtyMasuk: 12, qtyKeluar: 7 }
+    ]
+  },
+  stokOpnameHistory: [
+    { id: "SO-20260714-001", tanggal: "14/07/2026", kodeBarang: "CI", namaBarang: "Cabe Ijo", stokSistem: 12, stokFisik: 11.5, selisih: -0.5, hpp: 8000, nilaiSelisih: -4000, petugas: "Arif", keterangan: "Selisih timbang" },
+    { id: "SO-20260713-001", tanggal: "13/07/2026", kodeBarang: "CK", namaBarang: "Cabe Kriting", stokSistem: 15, stokFisik: 16, selisih: 1, hpp: 15000, nilaiSelisih: 15000, petugas: "Admin", keterangan: "Barang ditemukan di rak belakang" }
+  ],
   hutang: [
-    { noNota: "NT-20260708-002", supplier: "Supplier Pak Budi", totalHutang: 3500000, totalBayar: 0, sisaHutang: 3500000, status: "BELUM LUNAS" }
+    { noNota: "NT-20260708-002", tanggalNota: "08/07/2026", supplier: "Supplier Pak Budi", totalHutang: 3500000, totalBayar: 750000, sisaHutang: 2750000, status: "BELUM LUNAS" },
+    { noNota: "NT-20260712-001", tanggalNota: "12/07/2026", supplier: "Pasar Besar", totalHutang: 1250000, totalBayar: 250000, sisaHutang: 1000000, status: "BELUM LUNAS" }
+  ],
+  bayarHutangHistory: [
+    { id: "BH-20260714-001", tanggal: "14/07/2026", supplier: "Supplier Pak Budi", noNota: "NT-20260708-002", jumlahHutang: 3500000, jumlahBayar: 500000, metodeBayar: "TRANSFER", keterangan: "Pembayaran tahap kedua" },
+    { id: "BH-20260713-001", tanggal: "13/07/2026", supplier: "Pasar Besar", noNota: "NT-20260712-001", jumlahHutang: 1250000, jumlahBayar: 250000, metodeBayar: "CASH", keterangan: "Pembayaran sebagian" }
   ],
   cashflow: {
     penjualan: 2747000,
@@ -4318,9 +6326,23 @@ const demoData = {
       { id: "CF-4", tanggal: "07/07/2026", penjualan: 1547000, pemasukan: 250000, pengeluaran: 104000, saldo: 1067000, laba: 834000, hc: false, lc: false }
     ]
   },
+  pengeluaranHistory: [
+    { id: "PG-20260714-080000-101", tanggal: "14/07/2026", tanggalIso: "2026-07-14", kategori: "Bensin", jumlah: 75000, metodeBayar: "CASH", keterangan: "Bensin belanja pasar" },
+    { id: "PG-20260713-100000-102", tanggal: "13/07/2026", tanggalIso: "2026-07-13", kategori: "Kuli", jumlah: 150000, metodeBayar: "TRANSFER", keterangan: "Bongkar barang" },
+    { id: "PG-20260712-090000-103", tanggal: "12/07/2026", tanggalIso: "2026-07-12", kategori: "Parkir", jumlah: 10000, metodeBayar: "CASH", keterangan: "Parkir pasar" }
+  ],
+  notaHistory: [
+    { noNota: "NPJ-20260713-120000", tanggalAwal: "01/07/2026", tanggalAkhir: "12/07/2026", tanggalLabel: "1 - 12 Jul 2026", hc: false, fileUrl: "#" },
+    { noNota: "NPJ-20260705-090000", tanggalAwal: "01/07/2026", tanggalAkhir: "05/07/2026", tanggalLabel: "1 - 5 Jul 2026", hc: true, fileUrl: "#" }
+  ],
   transactionSummary: {
     lastInputDate: "07/07/2026",
     lastSellDate: "06/07/2026",
+    hargaLabaTerakhir: [
+      { nama: "Cabe Ijo", hpp: 12000, laba: 6000 },
+      { nama: "Rawit Putih", hpp: 18000, laba: 0 },
+      { nama: "Jeruk Peras", hpp: 7500, laba: 1500 }
+    ],
     masuk: [
       { tanggal: "07/07/2026", nama: "Cabe Ijo", qty: 20, satuan: "Kg", total: 320000 },
       { tanggal: "07/07/2026", nama: "Rawit Putih", qty: 4, satuan: "Kg", total: 88000 },
@@ -4345,10 +6367,14 @@ function isSessionErrorMessage(message) {
 const WRITE_API_ACTIONS = new Set([
   "ADD_BARANG_MASUK",
   "ADD_BARANG_TERJUAL",
+  "ADD_STOK_OPNAME",
   "ADD_BAYAR_HUTANG",
   "ADD_PENGELUARAN",
+  "UPDATE_PENGELUARAN",
+  "DELETE_PENGELUARAN",
   "UPDATE_HC",
   "UPDATE_LC",
+  "UPDATE_NOTA_HC",
   "GENERATE_NOTA_PENJUALAN",
   "REGISTER_FACE_DEVICE",
   "DISABLE_FACE_DEVICE"
@@ -4449,8 +6475,13 @@ function getDemoResponse(action, payload) {
       masterBarang: demoData.masterBarang,
       supplier: demoData.supplier,
       stok: demoData.stok,
+      stockDetail: demoData.stockDetail,
+      stokOpnameHistory: demoData.stokOpnameHistory,
       hutang: demoData.hutang,
+      bayarHutangHistory: demoData.bayarHutangHistory,
       cashflow: demoData.cashflow,
+      pengeluaranHistory: demoData.pengeluaranHistory,
+      notaHistory: demoData.notaHistory,
       transactionSummary: demoData.transactionSummary,
       cached: false,
       serverTime: new Date().toLocaleString('id-ID')
@@ -4459,15 +6490,24 @@ function getDemoResponse(action, payload) {
     GET_MASTER_BARANG: demoData.masterBarang,
     GET_SUPPLIER: demoData.supplier,
     GET_STOK_BARANG: demoData.stok,
+    GET_STOK_DETAIL: demoData.stockDetail,
+    GET_STOK_OPNAME_HISTORY: demoData.stokOpnameHistory,
     GET_HUTANG: demoData.hutang,
+    GET_BAYAR_HUTANG_HISTORY: demoData.bayarHutangHistory,
     GET_CASHFLOW: demoData.cashflow,
+    GET_PENGELUARAN_HISTORY: demoData.pengeluaranHistory,
+    GET_NOTA_HISTORY: demoData.notaHistory,
     GET_TRANSACTION_SUMMARY: demoData.transactionSummary,
     ADD_BARANG_MASUK: { message: `${payload.items?.length || 0} barang masuk tersimpan.` },
     ADD_BARANG_TERJUAL: { message: `${payload.items?.length || 0} barang terjual tersimpan.` },
+    ADD_STOK_OPNAME: { message: "Stok opname tersimpan." },
     ADD_BAYAR_HUTANG: { message: "pembayaran hutang tersimpan" },
     ADD_PENGELUARAN: { message: "Pengeluaran tersimpan." },
+    UPDATE_PENGELUARAN: { message: "Pengeluaran berhasil diperbaiki." },
+    DELETE_PENGELUARAN: { message: "Pengeluaran berhasil dihapus." },
     UPDATE_HC: { message: "Status pembayaran diperbarui" },
     UPDATE_LC: { message: "Status laba diperbarui" },
+    UPDATE_NOTA_HC: { message: payload.checked ? "H.C nota dicentang untuk seluruh periode." : "H.C nota dibatalkan untuk seluruh periode." },
     GENERATE_NOTA_PENJUALAN: {
       message: "Nota berhasil dibuat",
       url: "#",
@@ -4490,9 +6530,16 @@ const state = {
   masterBarang: [],
   supplier: [],
   hutang: [],
+  stockDetail: { rows: [], startDate: "", endDate: "", label: "", totalMasuk: 0, totalKeluar: 0, totalUnit: "Kg" },
+  stokOpnameHistory: [],
+  bayarHutangHistory: [],
+  pengeluaranHistory: [],
+  notaHistory: [],
+  nextNotaPeriod: null,
   transactionSummary: {
     masuk: [],
     keluar: [],
+    hargaLabaTerakhir: [],
     lastInputDate: "",
     lastSellDate: ""
   },
@@ -4508,7 +6555,7 @@ const state = {
 
 const FACE_DEVICE_STORAGE_KEY = "CABE_FACE_DEVICE_V1";
 const CABE_AUTH_TOKEN_KEY = "CABE_AUTH_TOKEN";
-const CABE_BOOTSTRAP_STORAGE_KEY = "CABE_BOOTSTRAP_CACHE_V999";
+const CABE_BOOTSTRAP_STORAGE_KEY = "CABE_BOOTSTRAP_CACHE_V14";
 let CABE_APP_STARTED = false;
 
 function getStoredFaceDevice() {
@@ -4860,8 +6907,262 @@ async function init() {
   updateWaPreview();
 }
 
+
+
+/* =========================================================
+   V17 - MOTION & LOADING HELPERS
+   ========================================================= */
+const CABE_REDUCED_MOTION = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
+const CABE_BUSY_LABELS = {
+  ADD_BARANG_MASUK: 'Menyimpan barang masuk...',
+  ADD_BARANG_TERJUAL: 'Menyimpan penjualan...',
+  ADD_STOK_OPNAME: 'Menyimpan stok opname...',
+  ADD_BAYAR_HUTANG: 'Menyimpan pembayaran...',
+  ADD_PENGELUARAN: 'Menyimpan pengeluaran...',
+  UPDATE_PENGELUARAN: 'Memperbarui pengeluaran...',
+  DELETE_PENGELUARAN: 'Menghapus pengeluaran...',
+  GENERATE_NOTA_PENJUALAN: 'Membuat nota PDF...'
+};
+
+function ensureOperationLoader() {
+  let loader = document.getElementById('operationLoader');
+  if (loader) return loader;
+  loader = document.createElement('div');
+  loader.id = 'operationLoader';
+  loader.className = 'operation-loader';
+  loader.setAttribute('role', 'status');
+  loader.setAttribute('aria-live', 'polite');
+  loader.setAttribute('aria-hidden', 'true');
+  loader.innerHTML = `
+    <div class="operation-loader-card">
+      <span class="operation-loader-spinner" aria-hidden="true"></span>
+      <span id="operationLoaderText">Memproses data...</span>
+    </div>
+  `;
+  document.body.appendChild(loader);
+  return loader;
+}
+
+function showOperationLoader(message = 'Memproses data...') {
+  const loader = ensureOperationLoader();
+  const label = loader.querySelector('#operationLoaderText');
+  if (label) label.textContent = message;
+  loader.classList.add('show');
+  loader.setAttribute('aria-hidden', 'false');
+  loader.dataset.startedAt = String(performance.now());
+}
+
+async function hideOperationLoader(minimumMs = 380) {
+  const loader = document.getElementById('operationLoader');
+  if (!loader) return;
+  const startedAt = Number(loader.dataset.startedAt || performance.now());
+  const remain = Math.max(0, minimumMs - (performance.now() - startedAt));
+  if (remain) await delay(remain);
+  loader.classList.remove('show');
+  loader.setAttribute('aria-hidden', 'true');
+}
+
+function setButtonLoading(button, busy, label = 'Memuat...') {
+  if (!button) return;
+  if (busy) {
+    if (!button.dataset.motionOriginalText) button.dataset.motionOriginalText = button.textContent.trim();
+    button.classList.remove('is-success');
+    button.classList.add('is-loading');
+    button.setAttribute('aria-busy', 'true');
+    button.textContent = label;
+  } else {
+    button.classList.remove('is-loading');
+    button.removeAttribute('aria-busy');
+    button.textContent = button.dataset.motionOriginalText || button.textContent;
+    delete button.dataset.motionOriginalText;
+  }
+}
+
+function setButtonSuccess(button, label = 'Selesai') {
+  if (!button) return;
+  const original = button.dataset.motionOriginalText || button.textContent;
+  button.classList.remove('is-loading');
+  button.classList.add('is-success');
+  button.removeAttribute('aria-busy');
+  button.textContent = label;
+  const successText = label;
+  window.setTimeout(() => {
+    button.classList.remove('is-success');
+    if (button.textContent === successText) button.textContent = original;
+    delete button.dataset.motionOriginalText;
+  }, 680);
+}
+
+function activePageElement() {
+  return document.querySelector('.page.active');
+}
+
+async function runRefreshAnimation(button, task, options = {}) {
+  if (!button || button.classList.contains('is-loading')) return false;
+  const scope = options.scope || activePageElement();
+  const startedAt = performance.now();
+  setButtonLoading(button, true, options.loadingLabel || 'Memuat...');
+  scope?.classList.add('is-data-loading');
+
+  let result = false;
+  try {
+    result = await task();
+    const remain = Math.max(0, 520 - (performance.now() - startedAt));
+    if (remain) await delay(remain);
+    scope?.classList.remove('is-data-loading');
+    if (result === false) {
+      setButtonLoading(button, false);
+      return false;
+    }
+    setButtonSuccess(button, options.successLabel || 'Selesai');
+    scheduleMotionRefresh(scope, { numbers: true, force: true });
+    return true;
+  } catch (err) {
+    scope?.classList.remove('is-data-loading');
+    setButtonLoading(button, false);
+    toast(err.message || 'Data gagal diperbarui.');
+    return false;
+  }
+}
+
+function isMotionVisible(element) {
+  if (!element || !element.isConnected) return false;
+  const style = getComputedStyle(element);
+  return style.display !== 'none' && style.visibility !== 'hidden' && element.getClientRects().length > 0;
+}
+
+function animateVisibleCards(scope = document, force = false) {
+  if (CABE_REDUCED_MOTION || !scope) return;
+  const selector = [
+    '.kpi-card',
+    '.panel',
+    '.stock-card',
+    '.cash-summary article',
+    '.cash-row-card',
+    '.list-item',
+    '.dashboard-mini-row:not(.dashboard-mini-head)',
+    '.expense-history-row',
+    '.debt-history-row',
+    '.opname-history-row:not(.opname-history-head)',
+    '.nota-history-row:not(.nota-history-head)',
+    '.stock-detail-row'
+  ].join(',');
+
+  const nodes = Array.from(scope.querySelectorAll(selector)).filter(isMotionVisible).slice(0, 36);
+  nodes.forEach((node, index) => {
+    if (!force && node.dataset.motionShown === '1') return;
+    node.dataset.motionShown = '1';
+    node.classList.remove('motion-card-enter');
+    node.style.setProperty('--motion-delay', `${Math.min(index, 14) * 42}ms`);
+    void node.offsetWidth;
+    node.classList.add('motion-card-enter');
+    window.setTimeout(() => node.classList.remove('motion-card-enter'), 1150 + Math.min(index, 14) * 42);
+  });
+}
+
+function parseMotionNumber(text) {
+  const raw = String(text || '').trim();
+  if (!raw) return null;
+  const isCurrency = /^[-+−]?\s*Rp\.?/i.test(raw);
+  const isQty = /\s(Kg|kg|pcs|Pcs|unit|Unit|buah|Buah|liter|Liter|L)$/i.test(raw);
+  if (!isCurrency && !isQty && !/^[-+−]?\s*[\d.,]+$/.test(raw)) return null;
+
+  const sign = /^\s*[−-]/.test(raw) ? -1 : 1;
+  let numeric = raw.replace(/Rp\.?/gi, '').replace(/[^\d.,]/g, '');
+  if (!numeric) numeric = '0';
+  if (numeric.includes(',') && numeric.includes('.')) numeric = numeric.replace(/\./g, '').replace(',', '.');
+  else if (numeric.includes(',')) numeric = numeric.replace(',', '.');
+  else numeric = numeric.replace(/\./g, '');
+  const value = sign * (Number(numeric) || 0);
+  const suffixMatch = raw.match(/\s(Kg|kg|pcs|Pcs|unit|Unit|buah|Buah|liter|Liter|L)$/);
+  return { value, isCurrency, suffix: suffixMatch ? ` ${suffixMatch[1]}` : '', finalText: raw };
+}
+
+function formatMotionNumber(value, meta) {
+  if (meta.isCurrency) return rupiah(Math.round(value));
+  const rounded = Math.round(value * 100) / 100;
+  return `${rounded.toLocaleString('id-ID', { maximumFractionDigits: 2 })}${meta.suffix}`;
+}
+
+function animateNumberElement(element, fromZero = true) {
+  if (CABE_REDUCED_MOTION || !isMotionVisible(element)) return;
+  const meta = parseMotionNumber(element.textContent);
+  if (!meta) return;
+  const prior = Number(element.dataset.motionValue);
+  const start = fromZero || !Number.isFinite(prior) ? 0 : prior;
+  const target = meta.value;
+  if (element._motionFrame) cancelAnimationFrame(element._motionFrame);
+  const duration = 620;
+  const startedAt = performance.now();
+  element.classList.add('number-animating');
+
+  const frame = now => {
+    const progress = Math.min(1, (now - startedAt) / duration);
+    const eased = 1 - Math.pow(1 - progress, 4);
+    const current = start + (target - start) * eased;
+    element.textContent = formatMotionNumber(current, meta);
+    if (progress < 1) {
+      element._motionFrame = requestAnimationFrame(frame);
+    } else {
+      element.textContent = meta.finalText;
+      element.dataset.motionValue = String(target);
+      element.classList.remove('number-animating');
+      element._motionFrame = null;
+    }
+  };
+  element._motionFrame = requestAnimationFrame(frame);
+}
+
+function animateNumbersWithin(scope = document, fromZero = true) {
+  if (!scope) return;
+  const selector = [
+    '#page-dashboard .kpi-card strong',
+    '#page-cashflow .cash-summary strong',
+    '#page-stok .stock-card > strong',
+    '#page-stok .stock-detail-total-in strong',
+    '#page-stok .stock-detail-total-out strong',
+    '#page-opname .opname-summary strong',
+    '#page-hutang .debt-metric strong',
+    '#page-hutang #debtTotalOutstanding'
+  ].join(',');
+  Array.from(scope.querySelectorAll(selector)).filter(isMotionVisible).forEach((element, index) => {
+    window.setTimeout(() => animateNumberElement(element, fromZero), Math.min(index, 12) * 36);
+  });
+}
+
+function scheduleMotionRefresh(scope = activePageElement(), options = {}) {
+  if (!scope) return;
+  requestAnimationFrame(() => {
+    animateVisibleCards(scope, Boolean(options.force));
+    if (options.numbers !== false) animateNumbersWithin(scope, options.fromZero !== false);
+  });
+}
+
+function pulseElement(element, className = 'form-success-pulse') {
+  if (!element || CABE_REDUCED_MOTION) return;
+  element.classList.remove(className);
+  void element.offsetWidth;
+  element.classList.add(className);
+  window.setTimeout(() => element.classList.remove(className), 1100);
+}
+
+function highlightActionResult(action, payload = {}) {
+  const selectorMap = {
+    ADD_STOK_OPNAME: '#opnameHistoryRows .opname-history-row:first-child',
+    ADD_BAYAR_HUTANG: '#debtPaymentHistoryRows .debt-history-row:first-child',
+    ADD_PENGELUARAN: '#pengeluaranHistoryRows .expense-history-row:first-child',
+    UPDATE_PENGELUARAN: payload.id ? `#pengeluaranHistoryRows [data-expense-id="${CSS.escape(String(payload.id))}"]` : '#pengeluaranHistoryRows .expense-history-row:first-child',
+    GENERATE_NOTA_PENJUALAN: '#notaHistoryRows .nota-history-row:first-child'
+  };
+  const selector = selectorMap[action];
+  if (!selector) return;
+  const element = document.querySelector(selector);
+  if (element) pulseElement(element, 'motion-highlight');
+}
+
+
 function setToday() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toLocalIsoDate(new Date());
   document.querySelectorAll('input[type="date"]').forEach(input => {
     if (!input.value) input.value = today;
   });
@@ -4871,6 +7172,24 @@ function setToday() {
   if (end) end.value = today;
 
   setCashFilterThisMonth();
+  setStockDetailThisMonth();
+}
+
+function setStockDetailThisMonth() {
+  const now = new Date();
+  const first = new Date(now.getFullYear(), now.getMonth(), 1);
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const startInput = document.getElementById("stockDetailStartDate");
+  const endInput = document.getElementById("stockDetailEndDate");
+  if (startInput) startInput.value = toLocalIsoDate(first);
+  if (endInput) endInput.value = toLocalIsoDate(last);
+}
+
+function getStockDetailFilter() {
+  return {
+    startDate: document.getElementById("stockDetailStartDate")?.value || "",
+    endDate: document.getElementById("stockDetailEndDate")?.value || ""
+  };
 }
 
 function setCashFilterThisMonth() {
@@ -5113,8 +7432,25 @@ function bindNavigation() {
   document.querySelectorAll("[data-route], [data-route-button]").forEach(btn => {
     btn.addEventListener("click", () => navigate(btn.dataset.route || btn.dataset.routeButton));
   });
-  document.getElementById("refreshBtn")?.addEventListener("click", () => loadAll({ fresh: true }));
-  document.getElementById("stockRefreshBtn")?.addEventListener("click", loadStock);
+  document.getElementById("refreshBtn")?.addEventListener("click", event => {
+    runRefreshAnimation(event.currentTarget, () => loadAll({ fresh: true }), {
+      scope: activePageElement(),
+      loadingLabel: "Memuat...",
+      successLabel: "Diperbarui"
+    });
+  });
+  document.getElementById("stockRefreshBtn")?.addEventListener("click", event => {
+    runRefreshAnimation(event.currentTarget, loadStock, {
+      scope: document.getElementById("page-stok"),
+      loadingLabel: "Memuat stok...",
+      successLabel: "Diperbarui"
+    });
+  });
+  document.getElementById("applyStockDetailBtn")?.addEventListener("click", () => loadStockDetail());
+  document.getElementById("stockDetailThisMonthBtn")?.addEventListener("click", () => {
+    setStockDetailThisMonth();
+    loadStockDetail();
+  });
   document.getElementById("opnameBarangSelect")?.addEventListener("change", updateOpnameSummary);
   document.getElementById("opnameStokFisik")?.addEventListener("input", updateOpnameSummary);
   document.getElementById("formStokOpname")?.addEventListener("reset", () => setTimeout(updateOpnameSummary, 0));
@@ -5139,23 +7475,72 @@ function bindMultiItems() {
   document.querySelector('[name="tanggalAwal"]').addEventListener("change", updateWaPreview);
   document.querySelector('[name="tanggalAkhir"]').addEventListener("change", updateWaPreview);
   document.getElementById("copyWaBtn").addEventListener("click", copyWaText);
+  document.getElementById("useNextNotaPeriodBtn")?.addEventListener("click", () => {
+    if (!state.nextNotaPeriod) return;
+    const startInput = document.querySelector('[name="tanggalAwal"]');
+    const endInput = document.querySelector('[name="tanggalAkhir"]');
+    if (startInput) startInput.value = state.nextNotaPeriod.start;
+    if (endInput) endInput.value = state.nextNotaPeriod.end;
+    updateWaPreview();
+    toast("Periode nota berikutnya sudah dipasang.");
+  });
+
+  document.getElementById("notaHistoryRows")?.addEventListener("change", async event => {
+    const input = event.target.closest('input[data-nota-hc]');
+    if (!input) return;
+
+    const checked = input.checked;
+    const row = input.closest('.nota-history-row');
+    input.disabled = true;
+    row?.classList.add('is-updating');
+
+    try {
+      const res = await callApi("UPDATE_NOTA_HC", {
+        noNota: input.dataset.notaHc,
+        checked
+      });
+      toast(res.message || (checked ? "H.C nota berhasil dicentang." : "H.C nota berhasil dibatalkan."));
+      pulseElement(row, "motion-highlight");
+      await loadAll({ fresh: true, silent: true });
+    } catch (err) {
+      input.checked = !checked;
+      toast(err.message || "Status H.C nota gagal diperbarui.");
+    } finally {
+      input.disabled = false;
+      row?.classList.remove('is-updating');
+    }
+  });
 
   document.getElementById("applyCashFilterBtn").addEventListener("click", () => {
     state.cashFilter.start = document.getElementById("cashStartDate").value;
     state.cashFilter.end = document.getElementById("cashEndDate").value;
-    if (state.lastCashflow) renderCashflow(state.lastCashflow);
+    if (state.lastCashflow) {
+      renderCashflow(state.lastCashflow);
+      scheduleMotionRefresh(document.getElementById("page-cashflow"), { numbers: true, force: true, fromZero: true });
+    }
   });
 
   document.getElementById("thisMonthCashBtn").addEventListener("click", () => {
     setCashFilterThisMonth();
-    if (state.lastCashflow) renderCashflow(state.lastCashflow);
+    if (state.lastCashflow) {
+      renderCashflow(state.lastCashflow);
+      scheduleMotionRefresh(document.getElementById("page-cashflow"), { numbers: true, force: true, fromZero: true });
+    }
   });
 }
 
 function navigate(route) {
   state.route = route;
-  document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
-  document.getElementById(`page-${route}`)?.classList.add("active");
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.remove("active", "page-entering");
+  });
+  const activePage = document.getElementById(`page-${route}`);
+  activePage?.classList.add("active", "page-entering");
+  if (activePage) {
+    void activePage.offsetWidth;
+    scheduleMotionRefresh(activePage, { numbers: true, force: true, fromZero: true });
+    window.setTimeout(() => activePage.classList.remove("page-entering"), 520);
+  }
 
   document.querySelectorAll(".nav-link,.mobile-link,.fab-link").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.route === route);
@@ -5267,6 +7652,9 @@ function bindForms() {
 
     payload.supplier = debt.supplier;
     payload.jumlahHutang = debt.sisaHutang;
+    if (Number(payload.jumlahBayar || 0) > Number(debt.sisaHutang || 0)) {
+      return toast(`Jumlah bayar tidak boleh melebihi sisa hutang ${rupiah(debt.sisaHutang)}.`);
+    }
 
     const ok = await submit("ADD_BAYAR_HUTANG", payload, "Pembayaran hutang tersimpan.", event.target);
     if (!ok) return;
@@ -5275,28 +7663,88 @@ function bindForms() {
     updateDebtPaymentInfo();
   });
 
-  document.getElementById("formPengeluaran").addEventListener("submit", async event => {
+  const pengeluaranForm = document.getElementById("formPengeluaran");
+  pengeluaranForm.addEventListener("reset", () => {
+    setTimeout(() => resetPengeluaranEditMode({ preserveFormValues: true }), 0);
+  });
+  pengeluaranForm.addEventListener("submit", async event => {
     event.preventDefault();
     const payload = formData(event.target);
     if (!payload.kategori) return toast("Pilih kategori pengeluaran.");
-    if (!Number(payload.jumlah || 0)) return toast("Jumlah pengeluaran wajib diisi.");
-    const ok = await submit("ADD_PENGELUARAN", payload, "Pengeluaran tersimpan.", event.target);
+    if (Number(payload.jumlah || 0) <= 0) return toast("Jumlah pengeluaran wajib lebih dari Rp. 0.");
+
+    const isEditing = Boolean(payload.id);
+    const action = isEditing ? "UPDATE_PENGELUARAN" : "ADD_PENGELUARAN";
+    const successMessage = isEditing ? "Pengeluaran berhasil diperbaiki." : "Pengeluaran tersimpan.";
+    const ok = await submit(action, payload, successMessage, event.target);
     if (!ok) return;
-    event.target.reset();
-    setToday();
+
+    resetPengeluaranEditMode();
+  });
+
+  document.getElementById("pengeluaranCancelEditBtn")?.addEventListener("click", () => {
+    resetPengeluaranEditMode();
+    toast("Mode edit dibatalkan.");
+  });
+
+  document.getElementById("pengeluaranHistoryRows")?.addEventListener("click", async event => {
+    const editBtn = event.target.closest('[data-expense-edit]');
+    if (editBtn) {
+      startPengeluaranEdit(editBtn.dataset.expenseEdit || "");
+      return;
+    }
+
+    const deleteBtn = event.target.closest('[data-expense-delete]');
+    if (!deleteBtn) return;
+
+    const id = deleteBtn.dataset.expenseDelete || "";
+    const item = state.pengeluaranHistory.find(row => row.id === id);
+    if (!item) return toast("Data pengeluaran tidak ditemukan.");
+
+    const approved = window.confirm(`Hapus pengeluaran ${item.kategori} sebesar ${rupiah(item.jumlah)} pada ${item.tanggal}?`);
+    if (!approved) return;
+
+    const rowEl = deleteBtn.closest('.expense-history-row');
+    rowEl?.classList.add('is-busy');
+    setButtonLoading(deleteBtn, true, "Menghapus...");
+    showOperationLoader(CABE_BUSY_LABELS.DELETE_PENGELUARAN);
+    try {
+      const res = await callApi("DELETE_PENGELUARAN", {
+        id,
+        requestId: makeRequestId("DELETE_PENGELUARAN")
+      });
+      if (document.getElementById("pengeluaranEditId")?.value === id) resetPengeluaranEditMode();
+      rowEl?.classList.add('motion-remove');
+      await delay(CABE_REDUCED_MOTION ? 0 : 280);
+      toast(res.message || "Pengeluaran berhasil dihapus.");
+      await loadAll({ fresh: true, silent: true });
+    } catch (err) {
+      rowEl?.classList.remove('motion-remove');
+      toast(err.message || "Pengeluaran gagal dihapus.");
+    } finally {
+      rowEl?.classList.remove('is-busy');
+      await hideOperationLoader();
+      setButtonLoading(deleteBtn, false);
+    }
   });
 
   document.getElementById("formNota").addEventListener("submit", async event => {
     event.preventDefault();
     const data = formData(event.target);
+    const submitButton = event.target.querySelector('button[type="submit"]');
     const payload = {
       tanggalAwal: data.tanggalAwal,
       tanggalAkhir: data.tanggalAkhir,
       start: data.tanggalAwal,
       end: data.tanggalAkhir,
-      label: formatRangeLabel(data.tanggalAwal, data.tanggalAkhir)
+      label: formatRangeLabel(data.tanggalAwal, data.tanggalAkhir),
+      requestId: makeRequestId("GENERATE_NOTA_PENJUALAN")
     };
 
+    setButtonLoading(submitButton, true, "Membuat PDF...");
+    setFormBusy(event.target, true);
+    showOperationLoader(CABE_BUSY_LABELS.GENERATE_NOTA_PENJUALAN);
+    let notaCreated = false;
     try {
       const res = await callApi("GENERATE_NOTA_PENJUALAN", payload);
       const waText = res.waText || buildWaText(payload.label, res.total || 0);
@@ -5312,8 +7760,17 @@ function bindForms() {
       }
 
       toast(res.message || "Nota penjualan berhasil dibuat");
+      await loadAll({ fresh: true, silent: true });
+      pulseElement(event.target);
+      highlightActionResult("GENERATE_NOTA_PENJUALAN", payload);
+      notaCreated = true;
     } catch (err) {
       toast(err.message || "Gagal generate nota");
+    } finally {
+      setFormBusy(event.target, false);
+      await hideOperationLoader();
+      if (notaCreated) setButtonSuccess(submitButton, "✓ Nota dibuat");
+      else setButtonLoading(submitButton, false);
     }
   });
 }
@@ -5393,7 +7850,7 @@ function addItemRow(type, data = {}) {
         <input type="text" inputmode="numeric" class="money-input" data-money data-field="hpp" placeholder="Rp. 0" value="${escapeAttr(formatMoneyValue(data.hpp || ""))}" readonly />
       </label>
       <label class="item-field">Laba/Kg
-        <input type="text" inputmode="numeric" class="money-input" data-money data-field="laba" placeholder="Rp. 0" value="${escapeAttr(formatMoneyValue(data.laba || ""))}" required />
+        <input type="text" inputmode="numeric" class="money-input" data-money data-allow-zero data-field="laba" placeholder="Rp. 0" value="${escapeAttr(formatMoneyValue(data.laba ?? "", true))}" required />
       </label>
       <label class="item-field">Harga Jual
         <input type="text" inputmode="numeric" class="money-input" data-money data-field="hargaJual" placeholder="Rp. 0" value="${escapeAttr(formatMoneyValue(data.hargaJual || ""))}" readonly />
@@ -5472,18 +7929,20 @@ function bindMoneyInputs(scope = document) {
     if (input.dataset.moneyBound === "true") return;
     input.dataset.moneyBound = "true";
 
+    const allowZero = input.hasAttribute("data-allow-zero");
+
     if (input.value) {
-      input.value = formatMoneyValue(input.value);
+      input.value = formatMoneyValue(input.value, allowZero);
     }
 
     input.addEventListener("input", () => {
       const cursorAtEnd = input.selectionStart === input.value.length;
-      input.value = formatMoneyValue(input.value);
+      input.value = formatMoneyValue(input.value, allowZero);
       if (cursorAtEnd) input.setSelectionRange(input.value.length, input.value.length);
     });
 
     input.addEventListener("blur", () => {
-      input.value = formatMoneyValue(input.value);
+      input.value = formatMoneyValue(input.value, allowZero);
     });
   });
 }
@@ -5494,9 +7953,10 @@ function moneyToNumber(value) {
   return Number(String(value).replace(/Rp\.?/gi, "").replace(/\./g, "").replace(/,/g, "").replace(/[^0-9-]/g, "")) || 0;
 }
 
-function formatMoneyValue(value) {
+function formatMoneyValue(value, allowZero = false) {
+  const raw = String(value ?? "").trim();
   const number = moneyToNumber(value);
-  if (!number) return "";
+  if (!number) return allowZero && raw !== "" ? "Rp. 0" : "";
   return `Rp. ${number.toLocaleString("id-ID")}`;
 }
 
@@ -5567,14 +8027,22 @@ async function submit(action, payload, successMessage, form) {
   const writePayload = isWriteApiAction(action)
     ? { ...payload, requestId: payload.requestId || makeRequestId(action) }
     : payload;
+  const submitButton = form?.querySelector('button[type="submit"]');
+  const busyLabel = CABE_BUSY_LABELS[action] || "Menyimpan data...";
 
   pendingSubmitActions.add(action);
+  setButtonLoading(submitButton, true, busyLabel.replace(/\.\.\.$/, "..."));
   setFormBusy(form, true);
+  showOperationLoader(busyLabel);
+  let didSucceed = false;
 
   try {
     const res = await callApi(action, writePayload);
     toast(res.message || successMessage);
-    loadAll({ fresh: true, silent: true }).catch(() => {});
+    await loadAll({ fresh: true, silent: true });
+    pulseElement(form);
+    highlightActionResult(action, payload);
+    didSucceed = true;
     return true;
   } catch (err) {
     toast(err.message || "Data gagal disimpan.");
@@ -5582,6 +8050,13 @@ async function submit(action, payload, successMessage, form) {
   } finally {
     pendingSubmitActions.delete(action);
     setFormBusy(form, false);
+    await hideOperationLoader();
+    if (didSucceed) {
+      const successLabel = action === "UPDATE_PENGELUARAN" ? "✓ Diperbarui" : "✓ Tersimpan";
+      setButtonSuccess(submitButton, successLabel);
+    } else {
+      setButtonLoading(submitButton, false);
+    }
   }
 }
 
@@ -5590,27 +8065,49 @@ function applyBootstrapData(data) {
   const masterBarang = data?.masterBarang || [];
   const supplier = data?.supplier || [];
   const stok = data?.stok || [];
+  const stockDetail = data?.stockDetail || {};
+  const stokOpnameHistory = data?.stokOpnameHistory || [];
   const hutang = data?.hutang || [];
+  const bayarHutangHistory = data?.bayarHutangHistory || [];
   const cashflow = data?.cashflow || {};
+  const pengeluaranHistory = data?.pengeluaranHistory || [];
+  const notaHistory = data?.notaHistory || [];
   const transactionSummary = data?.transactionSummary || {};
 
   state.masterBarang = normalizeMaster(masterBarang);
   state.supplier = normalizeSupplier(supplier);
   state.stok = normalizeStock(stok);
+  state.stockDetail = normalizeStockDetail(stockDetail);
+  state.stokOpnameHistory = normalizeStokOpnameHistory(stokOpnameHistory);
   state.hutang = normalizeDebt(hutang);
+  state.bayarHutangHistory = normalizeDebtPaymentHistory(bayarHutangHistory);
+  state.pengeluaranHistory = normalizePengeluaranHistory(pengeluaranHistory);
+  state.notaHistory = normalizeNotaHistory(notaHistory);
   state.transactionSummary = normalizeTransactionSummary(transactionSummary);
 
   renderDashboard(normalizeDashboard(dashboard));
   renderDashboardTransactions(state.transactionSummary);
   renderLastTransactionNotes(state.transactionSummary);
+  renderLatestSaleProfits(state.transactionSummary.hargaLabaTerakhir);
   renderSelects();
   refreshItemSelects();
   renderStock(state.stok);
+  renderStockDetail(state.stockDetail);
+  if (state.stockDetail.startDate && document.getElementById("stockDetailStartDate")) document.getElementById("stockDetailStartDate").value = state.stockDetail.startDate;
+  if (state.stockDetail.endDate && document.getElementById("stockDetailEndDate")) document.getElementById("stockDetailEndDate").value = state.stockDetail.endDate;
   renderOpnameSelect();
   updateOpnameSummary();
+  renderStokOpnameHistory(state.stokOpnameHistory);
   renderDebt(state.hutang);
+  renderDebtPaymentHistory(state.bayarHutangHistory);
   renderDebtSelects();
+  renderPengeluaranHistory(state.pengeluaranHistory);
   renderCashflow(normalizeCashflow(cashflow));
+  renderNotaHistory(state.notaHistory);
+  const motionPage = activePageElement();
+  if (!motionPage?.classList.contains('is-data-loading')) {
+    scheduleMotionRefresh(motionPage, { numbers: true, force: true, fromZero: true });
+  }
 }
 
 async function loadAll(options = {}) {
@@ -5621,26 +8118,72 @@ async function loadAll(options = {}) {
     applyBootstrapData(bootstrap);
     saveCachedBootstrap(bootstrap);
     if (!silent && fresh) toast("Data berhasil diperbarui.");
+    return true;
   } catch (err) {
     const cached = getCachedBootstrap();
     if (cached) {
       applyBootstrapData(cached);
       if (!silent) toast("Koneksi belum stabil. Data terakhir ditampilkan sementara.");
-      return;
+      return false;
     }
     toast(err.message || "Gagal memuat data");
+    return false;
   }
 }
 
 async function loadStock() {
   try {
-    state.stok = normalizeStock(await callApi("GET_STOK_BARANG"));
+    const filter = getStockDetailFilter();
+    const [stockData, detailData] = await Promise.all([
+      callApi("GET_STOK_BARANG"),
+      callApi("GET_STOK_DETAIL", filter)
+    ]);
+    state.stok = normalizeStock(stockData);
+    state.stockDetail = normalizeStockDetail(detailData);
     renderStock(state.stok);
+    renderStockDetail(state.stockDetail);
     renderOpnameSelect();
     updateOpnameSummary();
     toast("Data stok diperbarui.");
+    return true;
   } catch (err) {
     toast(err.message || "Gagal refresh stok");
+    return false;
+  }
+}
+
+async function loadStockDetail(options = {}) {
+  const { silent = false } = options;
+  const button = document.getElementById("applyStockDetailBtn");
+  const filter = getStockDetailFilter();
+
+  if (!filter.startDate || !filter.endDate) {
+    toast("Pilih tanggal awal dan tanggal akhir.");
+    return;
+  }
+  if (filter.startDate > filter.endDate) {
+    toast("Tanggal awal tidak boleh melewati tanggal akhir.");
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    setButtonLoading(button, true, "Memuat...");
+  }
+  try {
+    state.stockDetail = normalizeStockDetail(await callApi("GET_STOK_DETAIL", filter));
+    renderStockDetail(state.stockDetail);
+    scheduleMotionRefresh(document.getElementById("page-stok"), { numbers: true, force: true, fromZero: true });
+    if (!silent) toast("Detail stok berhasil diperbarui.");
+    return true;
+  } catch (err) {
+    toast(err.message || "Gagal memuat detail stok.");
+    return false;
+  } finally {
+    if (button) {
+      button.disabled = false;
+      setButtonLoading(button, false);
+    }
   }
 }
 
@@ -5712,6 +8255,27 @@ function renderDashboardMiniTable(id, rows, emptyText) {
       </div>
     `);
   });
+}
+
+function renderLatestSaleProfits(items = []) {
+  const container = document.getElementById("latestSaleProfitList");
+  if (!container) return;
+
+  if (!items.length) {
+    container.innerHTML = '<div class="latest-profit-empty">Belum ada data barang terjual.</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const laba = Number(item.laba || 0);
+    return `
+      <div class="latest-profit-row">
+        <span class="latest-profit-name" title="${escapeAttr(item.nama)}">${escapeHtml(item.nama)}</span>
+        <span class="latest-profit-value">${rupiah(item.hpp)}</span>
+        <span class="latest-profit-value${laba === 0 ? " zero" : ""}">${rupiah(laba)}</span>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderLastTransactionNotes(summary) {
@@ -5797,7 +8361,7 @@ function updateOpnameSummary() {
   if (!item || physicalInput.value === "") {
     diffEl.textContent = "0";
     statusEl.textContent = "Pilih barang dan isi stok fisik.";
-    nominalEl.textContent = "Nilai selisih: Rp. 0";
+    nominalEl.textContent = "Rp. 0";
     return;
   }
 
@@ -5806,11 +8370,45 @@ function updateOpnameSummary() {
   const nominalSign = nilaiSelisih > 0 ? "+" : nilaiSelisih < 0 ? "−" : "";
   diffEl.textContent = `${diff > 0 ? "+" : ""}${diff.toLocaleString("id-ID")} ${item.satuan || ""}`.trim();
   statusEl.textContent = diff > 0 ? "Stok fisik lebih banyak dari sistem." : diff < 0 ? "Stok fisik lebih sedikit dari sistem." : "Stok fisik sesuai dengan sistem.";
-  nominalEl.textContent = `Nilai selisih: ${nominalSign}${rupiah(Math.abs(nilaiSelisih))}`;
+  nominalEl.textContent = `${nominalSign}${rupiah(Math.abs(nilaiSelisih))}`;
+}
+
+function renderStokOpnameHistory(items = []) {
+  const wrap = document.getElementById("opnameHistoryRows");
+  const count = document.getElementById("opnameHistoryCount");
+  if (count) count.textContent = `${items.length} data`;
+  if (!wrap) return;
+
+  if (!items.length) {
+    wrap.innerHTML = '<div class="opname-history-empty">Belum ada riwayat stok opname.</div>';
+    return;
+  }
+
+  wrap.innerHTML = items.map(item => {
+    const diff = Number(item.selisih || 0);
+    const diffClass = diff > 0 ? "positive" : diff < 0 ? "negative" : "neutral";
+    const diffText = `${diff > 0 ? "+" : ""}${diff.toLocaleString("id-ID")} ${escapeHtml(item.satuan || "Kg")}`.trim();
+    const value = Number(item.nilaiSelisih || 0);
+    const valueText = `${value > 0 ? "+" : value < 0 ? "−" : ""}${rupiah(Math.abs(value))}`;
+
+    return `
+      <div class="opname-history-row">
+        <span class="opname-history-date" data-label="Tanggal">${escapeHtml(item.tanggal || "-")}</span>
+        <span class="opname-history-item" data-label="Barang"><strong>${escapeHtml(item.namaBarang || "-")}</strong><small>${escapeHtml(item.kodeBarang || "-")}</small></span>
+        <span class="opname-history-number" data-label="Stok Sistem">${Number(item.stokSistem || 0).toLocaleString("id-ID")} ${escapeHtml(item.satuan || "Kg")}</span>
+        <span class="opname-history-number" data-label="Stok Fisik">${Number(item.stokFisik || 0).toLocaleString("id-ID")} ${escapeHtml(item.satuan || "Kg")}</span>
+        <span class="opname-history-diff ${diffClass}" data-label="Selisih">${diffText}</span>
+        <span class="opname-history-value" data-label="Nilai Selisih">${valueText}<small>HPP ${rupiah(item.hpp)}</small></span>
+        <span class="opname-history-officer" data-label="Petugas">${escapeHtml(item.petugas || "-")}</span>
+        <span class="opname-history-note" data-label="Keterangan">${escapeHtml(item.keterangan || "-")}</span>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderStock(rows) {
   const wrap = document.getElementById("stockList");
+  if (!wrap) return;
   wrap.innerHTML = "";
 
   if (!rows.length) {
@@ -5825,36 +8423,277 @@ function renderStock(rows) {
     wrap.insertAdjacentHTML("beforeend", `
       <article class="stock-card stock-card-center">
         <h4>${escapeHtml(item.nama)} <span class="status-text ${cls}">(${escapeHtml(status)})</span></h4>
-        <strong>${Number(item.stok || 0).toLocaleString("id-ID")} ${escapeHtml(item.satuan)}</strong>
-        <small>HPP ${rupiah(item.hpp)}</small>
+        <strong>${formatStockQty(item.stok)} ${escapeHtml(item.satuan)}</strong>
       </article>
     `);
   });
 }
 
+function formatStockQty(value) {
+  return Number(value || 0).toLocaleString("id-ID", { maximumFractionDigits: 2 });
+}
+
+function renderStockDetail(data) {
+  const wrap = document.getElementById("stockDetailRows");
+  const count = document.getElementById("stockDetailCount");
+  const note = document.getElementById("stockDetailRangeNote");
+  if (!wrap) return;
+
+  const rows = data?.rows || [];
+  if (count) count.textContent = `${rows.length} barang`;
+
+  if (note) {
+    note.innerHTML = `
+      <div class="stock-detail-period"><span>Periode</span><strong>${escapeHtml(data?.label || "-")}</strong></div>
+      <div class="stock-detail-total-in"><span>Total Masuk</span><strong>${formatStockQty(data?.totalMasuk)} ${escapeHtml(data?.totalUnit || "Kg")}</strong></div>
+      <div class="stock-detail-total-out"><span>Total Keluar</span><strong>${formatStockQty(data?.totalKeluar)} ${escapeHtml(data?.totalUnit || "Kg")}</strong></div>
+    `;
+  }
+
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="stock-detail-empty">Belum ada pergerakan barang pada periode ini.</div>';
+    return;
+  }
+
+  wrap.innerHTML = rows.map((item, index) => `
+    <div class="stock-detail-row">
+      <span class="stock-detail-no" data-label="No">${index + 1}</span>
+      <span class="stock-detail-name" data-label="Nama Barang"><strong>${escapeHtml(item.nama || "-")}</strong><small>${escapeHtml(item.kode || "-")}</small></span>
+      <span class="stock-detail-qty in" data-label="Qty Masuk">${formatStockQty(item.qtyMasuk)} ${escapeHtml(item.satuan || "Kg")}</span>
+      <span class="stock-detail-qty out" data-label="Qty Keluar">${formatStockQty(item.qtyKeluar)} ${escapeHtml(item.satuan || "Kg")}</span>
+    </div>
+  `).join("");
+}
+
 function renderDebt(rows) {
   const wrap = document.getElementById("debtList");
+  const count = document.getElementById("debtOpenCount");
+  const totalEl = document.getElementById("debtOutstandingTotal");
+  if (!wrap) return;
+
+  const totalSisa = rows.reduce((sum, item) => sum + Number(item.sisaHutang || 0), 0);
+  if (count) count.textContent = `${rows.length} nota`;
+  if (totalEl) totalEl.textContent = rupiah(totalSisa);
   wrap.innerHTML = "";
 
   if (!rows.length) {
-    wrap.innerHTML = `<div class="list-item"><div><strong>Tidak ada hutang</strong><span>Supplier aman.</span></div><span class="badge green">LUNAS</span></div>`;
+    wrap.innerHTML = `<div class="list-item"><div><strong>Tidak ada hutang</strong><span>Semua nota supplier sudah lunas.</span></div><span class="badge green">LUNAS</span></div>`;
     return;
   }
 
   rows.forEach(item => {
     wrap.insertAdjacentHTML("beforeend", `
-      <div class="list-item">
-        <div>
-          <strong>${escapeHtml(item.supplier)}</strong>
-          <span>${escapeHtml(item.noNota)} · Bayar ${rupiah(item.totalBayar)}</span>
+      <article class="debt-card">
+        <div class="debt-card-top">
+          <div>
+            <strong>${escapeHtml(item.supplier)}</strong>
+            <small>${escapeHtml(item.noNota)}${item.tanggalNota ? ` · ${escapeHtml(item.tanggalNota)}` : ""}</small>
+          </div>
+          <span class="badge red">${escapeHtml(item.status || "BELUM LUNAS")}</span>
         </div>
-        <div style="text-align:right">
-          <strong>${rupiah(item.sisaHutang)}</strong>
-          <span class="badge red">${escapeHtml(item.status)}</span>
+        <div class="debt-metrics">
+          <div class="debt-metric"><span>Total Hutang</span><strong>${rupiah(item.totalHutang)}</strong></div>
+          <div class="debt-metric"><span>Sudah Dibayar</span><strong>${rupiah(item.totalBayar)}</strong></div>
+          <div class="debt-metric balance"><span>Sisa Hutang</span><strong>${rupiah(item.sisaHutang)}</strong></div>
         </div>
-      </div>
+      </article>
     `);
   });
+}
+
+function renderDebtPaymentHistory(items = []) {
+  const wrap = document.getElementById("debtPaymentHistoryRows");
+  const count = document.getElementById("debtPaymentHistoryCount");
+  if (count) count.textContent = `${items.length} data`;
+  if (!wrap) return;
+
+  if (!items.length) {
+    wrap.innerHTML = '<div class="debt-history-empty">Belum ada riwayat pembayaran hutang.</div>';
+    return;
+  }
+
+  wrap.innerHTML = items.map(item => `
+    <div class="debt-history-row">
+      <span class="debt-history-date" data-label="Tanggal">${escapeHtml(item.tanggal || "-")}</span>
+      <span class="debt-history-supplier" data-label="Supplier & Nota"><strong>${escapeHtml(item.supplier || "-")}</strong><small>${escapeHtml(item.noNota || "-")}</small></span>
+      <span class="debt-history-amount" data-label="Jumlah">${rupiah(item.jumlahBayar)}</span>
+      <span class="debt-history-method" data-label="Metode">${escapeHtml(item.metodeBayar || "-")}</span>
+      <span class="debt-history-note" data-label="Keterangan">${escapeHtml(item.keterangan || "-")}</span>
+    </div>
+  `).join("");
+}
+
+function renderPengeluaranHistory(items = []) {
+  const wrap = document.getElementById("pengeluaranHistoryRows");
+  const count = document.getElementById("pengeluaranHistoryCount");
+  if (count) count.textContent = `${items.length} data`;
+  if (!wrap) return;
+
+  if (!items.length) {
+    wrap.innerHTML = '<div class="expense-history-empty">Belum ada riwayat pengeluaran.</div>';
+    return;
+  }
+
+  wrap.innerHTML = items.map(item => `
+    <div class="expense-history-row" data-expense-id="${escapeAttr(item.id)}">
+      <span class="expense-history-date" data-label="Tanggal">${escapeHtml(item.tanggal || "-")}</span>
+      <span class="expense-history-category" data-label="Kategori" title="${escapeAttr(item.kategori)}">${escapeHtml(item.kategori || "-")}</span>
+      <span class="expense-history-amount" data-label="Jumlah">${rupiah(item.jumlah)}</span>
+      <span class="expense-history-method" data-label="Metode">${escapeHtml(item.metodeBayar || "-")}</span>
+      <span class="expense-history-note" data-label="Keterangan" title="${escapeAttr(item.keterangan || "-")}">${escapeHtml(item.keterangan || "-")}</span>
+      <div class="expense-history-actions" data-label="Aksi">
+        <button class="expense-action-btn" type="button" data-expense-edit="${escapeAttr(item.id)}">Edit</button>
+        <button class="expense-action-btn delete" type="button" data-expense-delete="${escapeAttr(item.id)}">Hapus</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function startPengeluaranEdit(id) {
+  const item = state.pengeluaranHistory.find(row => row.id === id);
+  const form = document.getElementById("formPengeluaran");
+  if (!item || !form) return toast("Data pengeluaran tidak ditemukan.");
+
+  form.elements.id.value = item.id;
+  form.elements.tanggal.value = item.tanggalIso || toLocalIsoDate(parseIndonesianDate(item.tanggal) || new Date());
+  const categorySelect = form.elements.kategori;
+  if (categorySelect && item.kategori && !Array.from(categorySelect.options).some(option => option.value === item.kategori)) {
+    categorySelect.add(new Option(item.kategori, item.kategori));
+  }
+  form.elements.kategori.value = item.kategori || "";
+  form.elements.jumlah.value = formatMoneyValue(item.jumlah);
+  form.elements.metodeBayar.value = item.metodeBayar || "CASH";
+  form.elements.keterangan.value = item.keterangan || "";
+
+  const submitBtn = document.getElementById("pengeluaranSubmitBtn");
+  const cancelBtn = document.getElementById("pengeluaranCancelEditBtn");
+  const notice = document.getElementById("pengeluaranEditNotice");
+  const label = document.getElementById("pengeluaranEditLabel");
+  if (submitBtn) submitBtn.textContent = "Simpan Perubahan";
+  if (cancelBtn) cancelBtn.hidden = false;
+  if (notice) notice.hidden = false;
+  if (label) label.textContent = item.id;
+
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+  pulseElement(form, "form-edit-focus");
+  setTimeout(() => form.elements.tanggal?.focus(), 320);
+}
+
+function resetPengeluaranEditMode(options = {}) {
+  const { preserveFormValues = false } = options;
+  const form = document.getElementById("formPengeluaran");
+  if (!form) return;
+
+  if (!preserveFormValues) form.reset();
+  if (form.elements.id) form.elements.id.value = "";
+  if (form.elements.tanggal && !form.elements.tanggal.value) form.elements.tanggal.value = toLocalIsoDate(new Date());
+
+  const submitBtn = document.getElementById("pengeluaranSubmitBtn");
+  const cancelBtn = document.getElementById("pengeluaranCancelEditBtn");
+  const notice = document.getElementById("pengeluaranEditNotice");
+  const label = document.getElementById("pengeluaranEditLabel");
+  if (submitBtn) submitBtn.textContent = "Simpan Pengeluaran";
+  if (cancelBtn) cancelBtn.hidden = true;
+  if (notice) notice.hidden = true;
+  if (label) label.textContent = "-";
+}
+
+function renderNotaHistory(items = []) {
+  const wrap = document.getElementById("notaHistoryRows");
+  updateNotaPeriodGuide(items);
+  if (!wrap) return;
+
+  if (!items.length) {
+    wrap.innerHTML = '<div class="nota-history-empty">Belum ada nota yang dibuat.</div>';
+    return;
+  }
+
+  wrap.innerHTML = items.map(item => {
+    const notaText = escapeHtml(item.noNota || "-");
+    const notaContent = item.fileUrl && item.fileUrl !== "#"
+      ? `<a href="${escapeAttr(item.fileUrl)}" target="_blank" rel="noopener" title="Buka PDF nota">${notaText}</a>`
+      : notaText;
+
+    return `
+      <div class="nota-history-row">
+        <span class="nota-history-number" title="${escapeAttr(item.noNota)}">${notaContent}</span>
+        <span class="nota-history-date">${escapeHtml(item.tanggalLabel || formatNotaHistoryRange(item.tanggalAwal, item.tanggalAkhir))}</span>
+        <div class="nota-history-check">
+          <input type="checkbox" data-nota-hc="${escapeAttr(item.noNota)}" aria-label="H.C ${escapeAttr(item.noNota)}" ${item.hc ? "checked" : ""}>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function updateNotaPeriodGuide(items = []) {
+  const lastEl = document.getElementById("lastNotaPeriod");
+  const nextEl = document.getElementById("nextNotaPeriod");
+  const useBtn = document.getElementById("useNextNotaPeriodBtn");
+  const latest = Array.isArray(items) && items.length ? items[0] : null;
+
+  state.nextNotaPeriod = null;
+  if (!latest) {
+    if (lastEl) lastEl.textContent = "Belum ada nota yang dibuat.";
+    if (nextEl) nextEl.textContent = "Riwayat nota akan menjadi patokan periode berikutnya.";
+    if (useBtn) useBtn.hidden = true;
+    return;
+  }
+
+  const rangeLabel = latest.tanggalLabel || formatNotaHistoryRange(latest.tanggalAwal, latest.tanggalAkhir);
+  if (lastEl) lastEl.textContent = `${latest.noNota} · ${rangeLabel}`;
+
+  const lastEnd = parseIndonesianDate(latest.tanggalAkhir || latest.tanggalAwal);
+  if (!lastEnd) {
+    if (nextEl) nextEl.textContent = "Periode nota terakhir tidak dapat dibaca.";
+    if (useBtn) useBtn.hidden = true;
+    return;
+  }
+
+  const nextStart = new Date(lastEnd.getFullYear(), lastEnd.getMonth(), lastEnd.getDate() + 1);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (nextStart.getTime() > today.getTime()) {
+    if (nextEl) nextEl.textContent = "Semua tanggal sampai hari ini sudah masuk ke nota.";
+    if (useBtn) useBtn.hidden = true;
+    return;
+  }
+
+  state.nextNotaPeriod = {
+    start: toLocalIsoDate(nextStart),
+    end: toLocalIsoDate(today)
+  };
+
+  if (nextEl) {
+    nextEl.textContent = `Saran nota berikutnya: ${formatLongLocalDate(nextStart)} sampai ${formatLongLocalDate(today)}.`;
+  }
+  if (useBtn) useBtn.hidden = false;
+}
+
+function toLocalIsoDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatLongLocalDate(date) {
+  return date.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function formatNotaHistoryRange(startValue, endValue) {
+  const start = parseIndonesianDate(startValue);
+  const end = parseIndonesianDate(endValue || startValue);
+  if (!start || !end) return [startValue, endValue].filter(Boolean).join(" - ") || "-";
+
+  const month = end.toLocaleDateString("id-ID", { month: "short", year: "numeric" });
+  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+  if (sameMonth) return `${start.getDate()} - ${end.getDate()} ${month}`;
+
+  const startText = start.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  const endText = end.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  return `${startText} - ${endText}`;
 }
 
 function renderCashflow(data) {
@@ -5910,21 +8749,23 @@ function renderCashflow(data) {
           <div class="cash-day">${escapeHtml(shortCashDate(row.tanggal))}</div>
 
           <div class="cash-row-amount in">
+            <span>Penjualan</span>
             <strong>${rupiah(row.pemasukan)}</strong>
           </div>
 
           <div class="cash-row-amount out">
+            <span>Pengeluaran</span>
             <strong>${rupiah(row.pengeluaran)}</strong>
           </div>
 
-          <label class="cash-row-check" title="H.C">
-            <input type="checkbox" data-action="UPDATE_HC" data-key="${escapeAttr(key)}" ${row.hc ? "checked" : ""}>
-            <span class="sr-only">H.C</span>
+          <label class="cash-row-check cash-row-check-hc" title="H.C">
+            <span class="cash-check-text">H.C</span>
+            <input type="checkbox" aria-label="H.C tanggal ${escapeAttr(row.tanggal)}" data-action="UPDATE_HC" data-key="${escapeAttr(key)}" ${row.hc ? "checked" : ""}>
           </label>
 
-          <label class="cash-row-check" title="L.C">
-            <input type="checkbox" data-action="UPDATE_LC" data-key="${escapeAttr(key)}" ${row.lc ? "checked" : ""}>
-            <span class="sr-only">L.C</span>
+          <label class="cash-row-check cash-row-check-lc" title="L.C">
+            <span class="cash-check-text">L.C</span>
+            <input type="checkbox" aria-label="L.C tanggal ${escapeAttr(row.tanggal)}" data-action="UPDATE_LC" data-key="${escapeAttr(key)}" ${row.lc ? "checked" : ""}>
           </label>
 
           <button class="cash-row-detail-btn" type="button" aria-expanded="false" data-toggle-cash-detail="${escapeAttr(detailId)}">Detail</button>
@@ -5957,12 +8798,15 @@ function renderCashflow(data) {
   wrap.querySelectorAll("input[type='checkbox']").forEach(input => {
     input.addEventListener("change", async event => {
       const action = event.target.dataset.action;
+      const card = event.target.closest('.cash-row-card');
       const payload = {
         id: event.target.dataset.key,
         key: event.target.dataset.key,
         checked: event.target.checked
       };
 
+      event.target.disabled = true;
+      card?.classList.add('is-updating');
       try {
         await callApi(action, payload);
         toast(action === "UPDATE_HC"
@@ -5973,6 +8817,9 @@ function renderCashflow(data) {
       } catch (err) {
         event.target.checked = !event.target.checked;
         toast(err.message || "Status gagal diperbarui.");
+      } finally {
+        event.target.disabled = false;
+        card?.classList.remove('is-updating');
       }
     });
   });
@@ -6021,7 +8868,7 @@ function parseIndonesianDate(value) {
 }
 
 function toIsoDate(date) {
-  return date.toISOString().slice(0, 10);
+  return toLocalIsoDate(date);
 }
 
 function shortCashDate(value) {
@@ -6104,9 +8951,49 @@ function normalizeStock(data = []) {
   })).filter(item => item.nama);
 }
 
+function normalizeStockDetail(data = {}) {
+  const sourceRows = asArray(data.rows ?? data.items ?? (Array.isArray(data) ? data : []));
+  const rows = sourceRows.map(item => ({
+    kode: item.kode || item.kodeBarang || item[0] || "",
+    nama: item.nama || item.namaBarang || item[1] || "",
+    satuan: item.satuan || item.unit || item[2] || "Kg",
+    qtyMasuk: num(item.qtyMasuk ?? item.masuk ?? item.inQty ?? item[3]),
+    qtyKeluar: num(item.qtyKeluar ?? item.keluar ?? item.outQty ?? item[4])
+  })).filter(item => item.nama);
+
+  return {
+    startDate: data.startDate || data.tanggalAwal || "",
+    endDate: data.endDate || data.tanggalAkhir || "",
+    label: data.label || data.periode || "",
+    totalMasuk: num(data.totalMasuk ?? rows.reduce((sum, item) => sum + item.qtyMasuk, 0)),
+    totalKeluar: num(data.totalKeluar ?? rows.reduce((sum, item) => sum + item.qtyKeluar, 0)),
+    totalUnit: data.totalUnit || data.satuanTotal || "Kg",
+    rows
+  };
+}
+
+function normalizeStokOpnameHistory(data = []) {
+  return asArray(data).map((item, index) => ({
+    id: String(item.id || item.ID || item[0] || `SO-${index + 1}`),
+    tanggal: item.tanggal || item.date || item[1] || "",
+    tanggalIso: item.tanggalIso || item.dateIso || "",
+    kodeBarang: item.kodeBarang || item.kode || item[2] || "",
+    namaBarang: item.namaBarang || item.nama || item[3] || "",
+    stokSistem: num(item.stokSistem ?? item.systemStock ?? item[4]),
+    stokFisik: num(item.stokFisik ?? item.physicalStock ?? item[5]),
+    selisih: num(item.selisih ?? item.difference ?? item[6]),
+    hpp: num(item.hpp ?? item.hppKg ?? item[7]),
+    nilaiSelisih: num(item.nilaiSelisih ?? item.differenceValue ?? item[8]),
+    petugas: item.petugas || item.officer || item[9] || "",
+    keterangan: item.keterangan || item.catatan || item.note || item[10] || "",
+    satuan: item.satuan || item.unit || "Kg"
+  })).filter(item => item.id && item.namaBarang);
+}
+
 function normalizeDebt(data = []) {
   return asArray(data).map(item => ({
     noNota: item.noNota || item[0] || "",
+    tanggalNota: item.tanggalNota || item.tanggal || item[1] || "",
     supplier: item.supplier || item[2] || "",
     totalHutang: num(item.totalHutang ?? item[3]),
     totalBayar: num(item.totalBayar ?? item[4]),
@@ -6115,22 +9002,71 @@ function normalizeDebt(data = []) {
   })).filter(item => item.noNota || item.supplier);
 }
 
+function normalizeDebtPaymentHistory(data = []) {
+  return asArray(data).map((item, index) => ({
+    id: String(item.id || item.ID || item[0] || `BH-${index + 1}`),
+    tanggal: item.tanggal || item.tanggalBayar || item.date || item[1] || "",
+    tanggalIso: item.tanggalIso || item.dateIso || "",
+    supplier: item.supplier || item.namaSupplier || item[2] || "",
+    noNota: item.noNota || item.nota || item[3] || "",
+    jumlahHutang: num(item.jumlahHutang ?? item.totalHutang ?? item[4]),
+    jumlahBayar: num(item.jumlahBayar ?? item.bayar ?? item.amount ?? item[5]),
+    metodeBayar: String(item.metodeBayar || item.metode || item[6] || "TRANSFER").toUpperCase(),
+    keterangan: item.keterangan || item.catatan || item.note || item[7] || ""
+  })).filter(item => item.noNota && item.jumlahBayar > 0);
+}
+
 function normalizeTransactionSummary(data = {}) {
   const normalizeRows = rows => asArray(rows).map(item => ({
     tanggal: item.tanggal || item.date || item[0] || "",
     nama: item.nama || item.namaBarang || item.barang || item[1] || "",
     qty: num(item.qty ?? item.jumlah ?? item[2]),
     satuan: item.satuan || item[3] || "Kg",
+    hpp: num(item.hpp ?? item.hppKg ?? item.hargaPokok),
+    laba: num(item.laba ?? item.labaKg ?? item.profit),
     harga: num(item.harga ?? item.hargaJual ?? item.hpp ?? item[4]),
     total: num(item.total ?? item.totalJual ?? item.totalModal ?? item[5])
+  })).filter(item => item.nama);
+
+  const normalizeLatestPrices = rows => asArray(rows).map(item => ({
+    tanggal: item.tanggal || item.date || "",
+    nama: item.nama || item.namaBarang || item.barang || item[0] || "",
+    hpp: num(item.hpp ?? item.hppKg ?? item.hargaPokok ?? item[1]),
+    laba: num(item.laba ?? item.labaKg ?? item.profit ?? item[2])
   })).filter(item => item.nama);
 
   return {
     lastInputDate: data.lastInputDate || data.lastMasukDate || data.lastInput || "",
     lastSellDate: data.lastSellDate || data.lastTerjualDate || data.lastSell || "",
     masuk: normalizeRows(data.masuk || data.barangMasuk || data.incoming),
-    keluar: normalizeRows(data.keluar || data.barangKeluar || data.terjual || data.outgoing)
+    keluar: normalizeRows(data.keluar || data.barangKeluar || data.terjual || data.outgoing),
+    hargaLabaTerakhir: normalizeLatestPrices(data.hargaLabaTerakhir || data.latestSalePrices || data.hargaTerakhir)
   };
+}
+
+function normalizePengeluaranHistory(data = []) {
+  return asArray(data).map((item, index) => ({
+    id: String(item.id || item.ID || item.key || item[0] || `PG-${index + 1}`),
+    tanggal: item.tanggal || item.date || item[1] || "",
+    tanggalIso: item.tanggalIso || item.dateIso || item.isoDate || "",
+    kategori: item.kategori || item.category || item[2] || "",
+    jumlah: num(item.jumlah ?? item.amount ?? item.nominal ?? item[3]),
+    metodeBayar: String(item.metodeBayar || item.metode || item.paymentMethod || item[4] || "CASH").toUpperCase(),
+    keterangan: item.keterangan || item.catatan || item.note || item[5] || "",
+    createdAt: item.createdAt || item.created || item[6] || "",
+    updatedAt: item.updatedAt || item.updated || item[7] || ""
+  })).filter(item => item.id && item.kategori && item.jumlah > 0);
+}
+
+function normalizeNotaHistory(data = []) {
+  return asArray(data).map(item => ({
+    noNota: item.noNota || item.nota || item[0] || "",
+    tanggalAwal: item.tanggalAwal || item.startDate || item.start || item[1] || "",
+    tanggalAkhir: item.tanggalAkhir || item.endDate || item.end || item[2] || "",
+    tanggalLabel: item.tanggalLabel || item.periode || item.dateLabel || "",
+    hc: Boolean(item.hc ?? item.statusHC ?? item.checked),
+    fileUrl: item.fileUrl || item.url || item.pdf || item[6] || ""
+  })).filter(item => item.noNota);
 }
 
 function normalizeCashflow(data = {}) {

@@ -1,6 +1,6 @@
 /******************************************************
  * CABE STOCK SYSTEM - SETUP OTOMATIS GOOGLE SHEETS
- * Versi: FINAL MAX - Anti Double Submit + Fast Stable + Security Lock + Face ID/Sidik Jari + H.C/L.C + nota + API Web/PWA
+ * Versi: V14 - Stok Barang Detail + Filter Tanggal + Responsive
  * Spreadsheet ID: 1UXtV-nDSPf0rjO40b_S8KXtwtq8c1rOCZeW1j1oD01c
  *
  * Cara pakai:
@@ -16,7 +16,7 @@ const CABE_TZ = 'Asia/Jakarta';
 const CABE_APP_PIN = '1234'; // GANTI PIN DI SINI
 const CABE_TOKEN_TTL_SECONDS = 21600; // 6 jam sesi login
 const CABE_BOOTSTRAP_CACHE_SECONDS = 20; // cache ringkas agar load data awal lebih cepat
-const CABE_BOOTSTRAP_CACHE_KEY = 'CABE_BOOTSTRAP_V4';
+const CABE_BOOTSTRAP_CACHE_KEY = 'CABE_BOOTSTRAP_V14';
 const CABE_WRITE_RESULT_CACHE_SECONDS = 21600; // 6 jam: cegah transaksi dobel saat koneksi lambat
 const CABE_WRITE_RESULT_CACHE_PREFIX = 'CABE_WRITE_RESULT_';
 const CABE_DRIVE_NOTA_PENJUALAN_FOLDER_ID = '1VHAvhRR0rydciTdKyxwyFVxQCNO7NOsh';
@@ -1781,7 +1781,7 @@ function apiHandleCABE_(action, payload, authToken) {
   requireCABEAuth_(authToken);
 
   const ss = SpreadsheetApp.openById(CABE_SPREADSHEET_ID);
-  const writeActions = ['ADD_BARANG_MASUK', 'ADD_BARANG_TERJUAL', 'ADD_BAYAR_HUTANG', 'ADD_PENGELUARAN', 'UPDATE_HC', 'UPDATE_LC', 'GENERATE_NOTA_PENJUALAN', 'REGISTER_FACE_DEVICE', 'DISABLE_FACE_DEVICE'];
+  const writeActions = ['ADD_BARANG_MASUK', 'ADD_BARANG_TERJUAL', 'ADD_STOK_OPNAME', 'ADD_BAYAR_HUTANG', 'ADD_PENGELUARAN', 'UPDATE_PENGELUARAN', 'DELETE_PENGELUARAN', 'UPDATE_HC', 'UPDATE_LC', 'UPDATE_NOTA_HC', 'GENERATE_NOTA_PENJUALAN', 'REGISTER_FACE_DEVICE', 'DISABLE_FACE_DEVICE'];
 
   if (writeActions.indexOf(action) >= 0) {
     return withCABEWriteLock_(function() {
@@ -1799,16 +1799,24 @@ function apiRouteCABE_(ss, action, payload) {
     case 'GET_MASTER_BARANG': return apiGetMasterBarang_(ss);
     case 'GET_SUPPLIER': return apiGetSupplier_(ss);
     case 'GET_STOK_BARANG': return apiGetStokBarang_(ss);
+    case 'GET_STOK_DETAIL': return apiGetStokDetail_(ss, payload);
+    case 'GET_STOK_OPNAME_HISTORY': return apiGetStokOpnameHistory_(ss);
     case 'GET_HUTANG': return apiGetHutang_(ss);
+    case 'GET_BAYAR_HUTANG_HISTORY': return apiGetBayarHutangHistory_(ss);
     case 'GET_CASHFLOW': return apiGetCashflow_(ss);
+    case 'GET_PENGELUARAN_HISTORY': return apiGetPengeluaranHistory_(ss);
+    case 'GET_NOTA_HISTORY': return apiGetNotaHistory_(ss);
     case 'GET_TRANSACTION_SUMMARY': return apiGetTransactionSummary_(ss);
     case 'ADD_BARANG_MASUK': return apiAddBarangMasuk_(ss, payload);
     case 'ADD_BARANG_TERJUAL': return apiAddBarangTerjual_(ss, payload);
     case 'ADD_STOK_OPNAME': return apiAddStokOpname_(ss, payload);
     case 'ADD_BAYAR_HUTANG': return apiAddBayarHutang_(ss, payload);
     case 'ADD_PENGELUARAN': return apiAddPengeluaran_(ss, payload);
+    case 'UPDATE_PENGELUARAN': return apiUpdatePengeluaran_(ss, payload);
+    case 'DELETE_PENGELUARAN': return apiDeletePengeluaran_(ss, payload);
     case 'UPDATE_HC': return apiUpdateCashflowFlag_(ss, payload, 'HC');
     case 'UPDATE_LC': return apiUpdateCashflowFlag_(ss, payload, 'LC');
+    case 'UPDATE_NOTA_HC': return apiUpdateNotaHC_(ss, payload);
     case 'GENERATE_NOTA_PENJUALAN': return apiGenerateNotaPenjualan_(ss, payload);
     case 'GET_AKSES_PERANGKAT': return apiGetAksesPerangkat_(ss);
     case 'REGISTER_FACE_DEVICE': return apiRegisterFaceDevice_(ss, payload);
@@ -2018,8 +2026,13 @@ function apiGetBootstrap_(ss, payload) {
     masterBarang: apiGetMasterBarang_(ss),
     supplier: apiGetSupplier_(ss),
     stok: apiGetStokBarang_(ss),
+    stockDetail: apiGetStokDetail_(ss, {}),
+    stokOpnameHistory: apiGetStokOpnameHistory_(ss),
     hutang: apiGetHutang_(ss),
+    bayarHutangHistory: apiGetBayarHutangHistory_(ss),
     cashflow: apiGetCashflow_(ss),
+    pengeluaranHistory: apiGetPengeluaranHistory_(ss),
+    notaHistory: apiGetNotaHistory_(ss),
     transactionSummary: apiGetTransactionSummary_(ss),
     cached: false,
     serverTime: formatDateTimeApi_(new Date())
@@ -2167,6 +2180,144 @@ function apiGetStokBarang_(ss) {
     .map(r => ({ kode: r[0], nama: r[1], kategori: r[2], satuan: r[3], stok: parseNumber_(r[4]), minimum: parseNumber_(r[5]), status: r[6], hpp: parseNumber_(r[7]), nilaiStok: parseNumber_(r[8]) }));
 }
 
+function apiGetStokDetail_(ss, payload) {
+  payload = payload || {};
+
+  const now = new Date();
+  const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const startDate = parseDateInput_(payload.startDate || payload.tanggalAwal) || defaultStart;
+  const endDate = parseDateInput_(payload.endDate || payload.tanggalAkhir) || defaultEnd;
+
+  const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  if (startDay.getTime() > endDay.getTime()) {
+    throw new Error('Tanggal awal tidak boleh melewati tanggal akhir.');
+  }
+
+  const startTime = startDay.getTime();
+  const endTime = endDay.getTime();
+  const movementMap = {};
+
+  function addMovement_(kode, nama, satuan, qty, type) {
+    kode = String(kode || '').trim();
+    nama = String(nama || '').trim();
+    if (!nama) return;
+
+    const key = normalize_(kode || nama);
+    if (!movementMap[key]) {
+      movementMap[key] = {
+        kode: kode,
+        nama: nama,
+        satuan: String(satuan || 'Kg').trim() || 'Kg',
+        qtyMasuk: 0,
+        qtyKeluar: 0
+      };
+    }
+
+    if (!movementMap[key].kode && kode) movementMap[key].kode = kode;
+    if (!movementMap[key].nama && nama) movementMap[key].nama = nama;
+    if (!movementMap[key].satuan && satuan) movementMap[key].satuan = String(satuan);
+
+    const value = parseNumber_(qty);
+    if (type === 'masuk') movementMap[key].qtyMasuk += value;
+    if (type === 'keluar') movementMap[key].qtyKeluar += value;
+  }
+
+  function readMovement_(sheetName, type) {
+    const sh = ss.getSheetByName(sheetName);
+    if (!sh) return;
+    const last = sh.getLastRow();
+    if (last < CABE_START_ROW) return;
+
+    // Kolom A-F sudah mencakup ID, Tanggal, Kode, Nama, Qty, dan Satuan.
+    const values = sh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, 6).getValues();
+    values.forEach(function(row) {
+      const date = row[1] instanceof Date ? row[1] : parseDateInput_(row[1]);
+      if (!date) return;
+      const dayTime = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+      if (dayTime < startTime || dayTime > endTime) return;
+      addMovement_(row[2], row[3], row[5], row[4], type);
+    });
+  }
+
+  readMovement_(CABE_SHEETS.BARANG_MASUK, 'masuk');
+  readMovement_(CABE_SHEETS.BARANG_TERJUAL, 'keluar');
+
+  const rows = Object.keys(movementMap)
+    .map(function(key) { return movementMap[key]; })
+    .filter(function(item) { return item.qtyMasuk !== 0 || item.qtyKeluar !== 0; })
+    .sort(function(a, b) {
+      return String(a.nama || '').localeCompare(String(b.nama || ''), 'id', { sensitivity: 'base' });
+    });
+
+  const totalMasuk = rows.reduce(function(sum, item) { return sum + parseNumber_(item.qtyMasuk); }, 0);
+  const totalKeluar = rows.reduce(function(sum, item) { return sum + parseNumber_(item.qtyKeluar); }, 0);
+  const units = {};
+  rows.forEach(function(item) { units[String(item.satuan || 'Kg')] = true; });
+  const unitNames = Object.keys(units);
+  const totalUnit = unitNames.length === 1 ? unitNames[0] : (unitNames.length ? 'Unit campuran' : 'Kg');
+
+  return {
+    startDate: Utilities.formatDate(startDay, CABE_TZ, 'yyyy-MM-dd'),
+    endDate: Utilities.formatDate(endDay, CABE_TZ, 'yyyy-MM-dd'),
+    label: formatDateApi_(startDay) + ' - ' + formatDateApi_(endDay),
+    totalMasuk: totalMasuk,
+    totalKeluar: totalKeluar,
+    totalUnit: totalUnit,
+    rows: rows
+  };
+}
+
+function apiGetStokOpnameHistory_(ss) {
+  const sh = ss.getSheetByName(CABE_SHEETS.STOK_OPNAME);
+  if (!sh) return [];
+
+  const last = sh.getLastRow();
+  if (last < CABE_START_ROW) return [];
+
+  const width = CABE_HEADERS[CABE_SHEETS.STOK_OPNAME].length;
+  const values = sh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, width).getValues();
+  const master = ss.getSheetByName(CABE_SHEETS.MASTER_BARANG);
+  const unitMap = {};
+  if (master && master.getLastRow() >= CABE_START_ROW) {
+    master.getRange(CABE_START_ROW, 1, master.getLastRow() - CABE_START_ROW + 1, 4).getValues().forEach(function(row) {
+      if (row[0]) unitMap[normalize_(row[0])] = String(row[3] || 'Kg');
+    });
+  }
+
+  return values.map(function(row, index) {
+      const rowNumber = CABE_START_ROW + index;
+      const tanggalRaw = row[1] instanceof Date ? row[1] : parseDateInput_(row[1]);
+      const kode = String(row[2] || '').trim();
+      return {
+        rowNumber: rowNumber,
+        id: String(row[0] || ('SO-ROW-' + rowNumber)).trim(),
+        tanggalRaw: tanggalRaw,
+        tanggal: tanggalRaw ? formatDateApi_(tanggalRaw) : String(row[1] || ''),
+        tanggalIso: tanggalRaw ? Utilities.formatDate(tanggalRaw, CABE_TZ, 'yyyy-MM-dd') : '',
+        kodeBarang: kode,
+        namaBarang: String(row[3] || '').trim(),
+        stokSistem: parseNumber_(row[4]),
+        stokFisik: parseNumber_(row[5]),
+        selisih: parseNumber_(row[6]),
+        hpp: parseNumber_(row[7]),
+        nilaiSelisih: parseNumber_(row[8]),
+        petugas: String(row[9] || '').trim(),
+        keterangan: String(row[10] || '').trim(),
+        satuan: unitMap[normalize_(kode)] || 'Kg',
+        createdAt: formatDateTimeApi_(row[11]),
+        updatedAt: formatDateTimeApi_(row[12])
+      };
+    })
+    .filter(function(item) { return item.namaBarang || item.kodeBarang; })
+    .sort(function(a, b) {
+      const aTime = a.tanggalRaw ? a.tanggalRaw.getTime() : 0;
+      const bTime = b.tanggalRaw ? b.tanggalRaw.getTime() : 0;
+      return bTime - aTime || b.rowNumber - a.rowNumber;
+    });
+}
+
 function apiGetHutang_(ss) {
   const sh = ss.getSheetByName(CABE_SHEETS.HUTANG);
   const last = sh.getLastRow();
@@ -2174,6 +2325,43 @@ function apiGetHutang_(ss) {
   return sh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, 8).getValues()
     .filter(r => r[0] && r[6] !== 'LUNAS')
     .map(r => ({ noNota: r[0], tanggalNota: formatDateApi_(r[1]), supplier: r[2], totalHutang: parseNumber_(r[3]), totalBayar: parseNumber_(r[4]), sisaHutang: parseNumber_(r[5]), status: r[6], jatuhTempo: formatDateApi_(r[7]) }));
+}
+
+function apiGetBayarHutangHistory_(ss) {
+  const sh = ss.getSheetByName(CABE_SHEETS.BAYAR_HUTANG);
+  if (!sh) return [];
+
+  const last = sh.getLastRow();
+  if (last < CABE_START_ROW) return [];
+
+  const width = CABE_HEADERS[CABE_SHEETS.BAYAR_HUTANG].length;
+  const values = sh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, width).getValues();
+
+  return values.map(function(row, index) {
+      const rowNumber = CABE_START_ROW + index;
+      const tanggalRaw = row[1] instanceof Date ? row[1] : parseDateInput_(row[1]);
+      return {
+        rowNumber: rowNumber,
+        id: String(row[0] || ('BH-ROW-' + rowNumber)).trim(),
+        tanggalRaw: tanggalRaw,
+        tanggal: tanggalRaw ? formatDateApi_(tanggalRaw) : String(row[1] || ''),
+        tanggalIso: tanggalRaw ? Utilities.formatDate(tanggalRaw, CABE_TZ, 'yyyy-MM-dd') : '',
+        supplier: String(row[2] || '').trim(),
+        noNota: String(row[3] || '').trim(),
+        jumlahHutang: parseNumber_(row[4]),
+        jumlahBayar: parseNumber_(row[5]),
+        metodeBayar: String(row[6] || 'TRANSFER').trim().toUpperCase(),
+        keterangan: String(row[7] || '').trim(),
+        createdAt: formatDateTimeApi_(row[8]),
+        updatedAt: formatDateTimeApi_(row[9])
+      };
+    })
+    .filter(function(item) { return item.noNota && item.jumlahBayar > 0; })
+    .sort(function(a, b) {
+      const aTime = a.tanggalRaw ? a.tanggalRaw.getTime() : 0;
+      const bTime = b.tanggalRaw ? b.tanggalRaw.getTime() : 0;
+      return bTime - aTime || b.rowNumber - a.rowNumber;
+    });
 }
 
 function apiGetCashflow_(ss) {
@@ -2225,13 +2413,152 @@ function apiGetCashflow_(ss) {
   };
 }
 
+function apiGetNotaHistory_(ss) {
+  const sh = ss.getSheetByName(CABE_SHEETS.NOTA_PENJUALAN);
+  if (!sh) return [];
+
+  const last = sh.getLastRow();
+  if (last < CABE_START_ROW) return [];
+
+  const cashflowSh = ss.getSheetByName(CABE_SHEETS.CASHFLOW);
+  const cashflowRows = cashflowSh ? cashflowSh.getRange('A6:I36').getValues() : [];
+  const values = sh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, CABE_HEADERS[CABE_SHEETS.NOTA_PENJUALAN].length).getValues();
+
+  return values
+    .filter(function(row) { return row[0]; })
+    .map(function(row) {
+      const startDate = parseDateInput_(row[1]);
+      const endDate = parseDateInput_(row[2] || row[1]);
+      const storedStatus = String(row[4] || '').trim().toUpperCase();
+      let hc = storedStatus === 'SUDAH H.C' || storedStatus === 'SUDAH HC' || storedStatus === 'TRUE' || row[4] === true;
+
+      if (startDate && endDate && cashflowRows.length) {
+        const startTime = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()).getTime();
+        const endTime = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()).getTime();
+        const matched = cashflowRows.filter(function(cashRow) {
+          const date = parseDateInput_(cashRow[0]);
+          if (!date) return false;
+          const time = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+          return time >= startTime && time <= endTime;
+        });
+        if (matched.length) hc = matched.every(function(cashRow) { return cashRow[7] === true; });
+      }
+
+      return {
+        noNota: String(row[0] || ''),
+        tanggalAwal: formatDateApi_(row[1]),
+        tanggalAkhir: formatDateApi_(row[2] || row[1]),
+        tanggalLabel: formatNotaHistoryRange_(row[1], row[2] || row[1]),
+        total: parseNumber_(row[3]),
+        hc: hc,
+        fileUrl: String(row[6] || ''),
+        createdAt: formatDateTimeApi_(row[8]),
+        sortTime: row[8] instanceof Date
+          ? row[8].getTime()
+          : ((endDate || startDate) ? (endDate || startDate).getTime() : 0)
+      };
+    })
+    .sort(function(a, b) { return b.sortTime - a.sortTime; })
+    .map(function(item) {
+      delete item.sortTime;
+      return item;
+    });
+}
+
+function formatNotaHistoryRange_(startValue, endValue) {
+  const startDate = parseDateInput_(startValue);
+  const endDate = parseDateInput_(endValue || startValue);
+  if (!startDate || !endDate) return '';
+
+  const startDay = Number(Utilities.formatDate(startDate, CABE_TZ, 'd'));
+  const endDay = Number(Utilities.formatDate(endDate, CABE_TZ, 'd'));
+  const sameMonth = Utilities.formatDate(startDate, CABE_TZ, 'yyyyMM') === Utilities.formatDate(endDate, CABE_TZ, 'yyyyMM');
+
+  if (sameMonth) {
+    return startDay + ' - ' + endDay + ' ' + Utilities.formatDate(endDate, CABE_TZ, 'MMM yyyy');
+  }
+  return Utilities.formatDate(startDate, CABE_TZ, 'd MMM yyyy') + ' - ' + Utilities.formatDate(endDate, CABE_TZ, 'd MMM yyyy');
+}
+
+function apiUpdateNotaHC_(ss, payload) {
+  const noNota = String(payload.noNota || payload.nota || '').trim();
+  if (!noNota) throw new Error('Nomor nota wajib dipilih.');
+
+  const notaSh = ss.getSheetByName(CABE_SHEETS.NOTA_PENJUALAN);
+  if (!notaSh) throw new Error('Sheet NOTA PENJUALAN tidak ditemukan.');
+
+  const last = notaSh.getLastRow();
+  if (last < CABE_START_ROW) throw new Error('Riwayat nota belum tersedia.');
+
+  const notaValues = notaSh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, 3).getValues();
+  let notaRow = 0;
+  let startDate = null;
+  let endDate = null;
+
+  for (let i = 0; i < notaValues.length; i++) {
+    if (String(notaValues[i][0] || '').trim() === noNota) {
+      notaRow = CABE_START_ROW + i;
+      startDate = parseDateInput_(notaValues[i][1]);
+      endDate = parseDateInput_(notaValues[i][2] || notaValues[i][1]);
+      break;
+    }
+  }
+
+  if (!notaRow) throw new Error('Nomor nota tidak ditemukan: ' + noNota);
+  if (!startDate || !endDate) throw new Error('Periode nota tidak valid.');
+
+  const checked = parseBooleanApi_(payload.checked);
+  const cashflowSh = ss.getSheetByName(CABE_SHEETS.CASHFLOW);
+  if (!cashflowSh) throw new Error('Sheet CASHFLOW BISNIS tidak ditemukan.');
+
+  const startTime = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()).getTime();
+  const endTime = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()).getTime();
+  const cashflowValues = cashflowSh.getRange('A6:I36').getValues();
+  const hcValues = cashflowValues.map(function(row) { return [row[7] === true]; });
+  let updatedCount = 0;
+
+  cashflowValues.forEach(function(row, index) {
+    const date = parseDateInput_(row[0]);
+    if (!date) return;
+    const time = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+    if (time < startTime || time > endTime) return;
+    hcValues[index][0] = checked;
+    updatedCount++;
+  });
+
+  if (!updatedCount) {
+    throw new Error('Tanggal nota tidak ditemukan pada Cashflow bulan aktif.');
+  }
+
+  cashflowSh.getRange(6, 8, hcValues.length, 1).setValues(hcValues);
+  notaSh.getRange(notaRow, 5).setValue(checked ? 'SUDAH H.C' : 'BELUM H.C');
+  notaSh.getRange(notaRow, 10).setValue(new Date());
+  SpreadsheetApp.flush();
+
+  buildDashboard_(ss);
+  clearCABEBootstrapCache_();
+
+  return {
+    message: checked
+      ? 'H.C nota dicentang untuk ' + updatedCount + ' tanggal.'
+      : 'H.C nota dibatalkan untuk ' + updatedCount + ' tanggal.',
+    noNota: noNota,
+    checked: checked,
+    updatedDates: updatedCount,
+    tanggalAwal: formatDateApi_(startDate),
+    tanggalAkhir: formatDateApi_(endDate)
+  };
+}
+
 function apiGetTransactionSummary_(ss) {
   const masuk = apiGetRecentBarangMasuk_(ss, 5);
   const keluar = apiGetRecentBarangTerjual_(ss, 5);
+  const hargaLabaTerakhir = apiGetLatestSalePrices_(ss);
 
   return {
     masuk: masuk,
     keluar: keluar,
+    hargaLabaTerakhir: hargaLabaTerakhir,
     lastInputDate: masuk.length ? masuk[0].tanggal : '',
     lastSellDate: keluar.length ? keluar[0].tanggal : ''
   };
@@ -2315,6 +2642,53 @@ function apiGetRecentBarangTerjual_(ss, limit) {
     }));
 }
 
+function apiGetLatestSalePrices_(ss, limit) {
+  const sh = ss.getSheetByName(CABE_SHEETS.BARANG_TERJUAL);
+  if (!sh) return [];
+
+  const last = sh.getLastRow();
+  if (last < CABE_START_ROW) return [];
+
+  const values = sh.getRange(
+    CABE_START_ROW,
+    1,
+    last - CABE_START_ROW + 1,
+    CABE_HEADERS[CABE_SHEETS.BARANG_TERJUAL].length
+  ).getValues();
+
+  const sorted = values.map((row, index) => ({
+      rowIndex: CABE_START_ROW + index,
+      tanggalRaw: row[1],
+      tanggal: formatDateApi_(row[1]),
+      kode: String(row[2] || '').trim(),
+      nama: String(row[3] || '').trim(),
+      hpp: parseNumber_(row[6]),
+      laba: parseNumber_(row[7])
+    }))
+    .filter(item => item.tanggalRaw instanceof Date && item.nama)
+    .sort((a, b) => b.tanggalRaw - a.tanggalRaw || b.rowIndex - a.rowIndex);
+
+  const seen = {};
+  const result = [];
+  const max = Math.max(parseInt(limit, 10) || sorted.length, 1);
+
+  for (let i = 0; i < sorted.length && result.length < max; i++) {
+    const item = sorted[i];
+    const key = normalize_(item.kode || item.nama);
+    if (!key || seen[key]) continue;
+    seen[key] = true;
+    result.push({
+      tanggal: item.tanggal,
+      kode: item.kode,
+      nama: item.nama,
+      hpp: item.hpp,
+      laba: item.laba
+    });
+  }
+
+  return result;
+}
+
 function apiAddBarangMasuk_(ss, payload) {
   const sh = ss.getSheetByName(CABE_SHEETS.BARANG_MASUK);
   const items = payload.items || [];
@@ -2361,7 +2735,13 @@ function apiAddBarangTerjual_(ss, payload) {
     // dan Harga Jual dikunci dari payload web. Kalau payload kosong, baru fallback ke sheet.
     let hppWeb = parseNumber_(item.hpp || item.hppKg || item.hargaPokok);
     const hargaJualWeb = parseNumber_(item.hargaJual || item.harga || item.sellingPrice);
-    let labaWeb = parseNumber_(item.laba || item.labaKg || item.profit);
+    const labaDiisi = Object.prototype.hasOwnProperty.call(item, 'laba') ||
+      Object.prototype.hasOwnProperty.call(item, 'labaKg') ||
+      Object.prototype.hasOwnProperty.call(item, 'profit');
+    let labaWeb = parseNumber_(
+      Object.prototype.hasOwnProperty.call(item, 'laba') ? item.laba :
+      Object.prototype.hasOwnProperty.call(item, 'labaKg') ? item.labaKg : item.profit
+    );
 
     sh.getRange(row, 2).setValue(tanggal);
     if (kodeBarang) sh.getRange(row, 3).setValue(kodeBarang);
@@ -2373,7 +2753,7 @@ function apiAddBarangTerjual_(ss, payload) {
 
     const kodeFinal = sh.getRange(row, 3).getValue();
     if (!hppWeb && kodeFinal) hppWeb = lookupHPP_(ss, kodeFinal);
-    if (!labaWeb && hargaJualWeb && hppWeb) labaWeb = hargaJualWeb - hppWeb;
+    if (!labaDiisi && hargaJualWeb && hppWeb) labaWeb = hargaJualWeb - hppWeb;
 
     if (kodeFinal) {
       const satuan = lookupMaster_(ss, kodeFinal, 4);
@@ -2455,6 +2835,9 @@ function apiAddBayarHutang_(ss, payload) {
   if (normalize_(debt.status) === 'LUNAS' || parseNumber_(debt.sisaHutang) <= 0) {
     throw new Error('No Nota ini sudah lunas: ' + noNota);
   }
+  if (jumlahBayar > parseNumber_(debt.sisaHutang)) {
+    throw new Error('Jumlah bayar tidak boleh melebihi sisa hutang Rp. ' + parseNumber_(debt.sisaHutang).toLocaleString('id-ID') + '.');
+  }
 
   const row = getNextEmptyRow_(sh, CABE_START_ROW, 3);
   sh.getRange(row, 2).setValue(parseDateInput_(payload.tanggalBayar) || todayDate_());
@@ -2467,6 +2850,73 @@ function apiAddBayarHutang_(ss, payload) {
   autoBayarHutang_(ss, sh, row, 4);
   quickAfterWrite_(ss);
   return { message: 'Pembayaran hutang tersimpan untuk ' + noNota };
+}
+
+function apiGetPengeluaranHistory_(ss) {
+  const sh = ss.getSheetByName(CABE_SHEETS.PENGELUARAN);
+  if (!sh) return [];
+
+  const last = sh.getLastRow();
+  if (last < CABE_START_ROW) return [];
+
+  const width = CABE_HEADERS[CABE_SHEETS.PENGELUARAN].length;
+  const values = sh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, width).getValues();
+
+  return values.map(function(row, index) {
+      const rowNumber = CABE_START_ROW + index;
+      const tanggalRaw = row[1] instanceof Date ? row[1] : parseDateInput_(row[1]);
+      const id = String(row[0] || ('ROW-' + rowNumber)).trim();
+      return {
+        rowNumber: rowNumber,
+        tanggalRaw: tanggalRaw,
+        id: id,
+        tanggal: tanggalRaw ? formatDateApi_(tanggalRaw) : String(row[1] || ''),
+        tanggalIso: tanggalRaw ? Utilities.formatDate(tanggalRaw, CABE_TZ, 'yyyy-MM-dd') : '',
+        kategori: String(row[2] || '').trim(),
+        jumlah: parseNumber_(row[3]),
+        metodeBayar: String(row[4] || 'CASH').trim().toUpperCase(),
+        keterangan: String(row[5] || '').trim(),
+        createdAt: formatDateTimeApi_(row[6]),
+        updatedAt: formatDateTimeApi_(row[7])
+      };
+    })
+    .filter(function(item) {
+      return item.kategori && item.jumlah > 0;
+    })
+    .sort(function(a, b) {
+      const aTime = a.tanggalRaw ? a.tanggalRaw.getTime() : 0;
+      const bTime = b.tanggalRaw ? b.tanggalRaw.getTime() : 0;
+      return bTime - aTime || b.rowNumber - a.rowNumber;
+    })
+    .map(function(item) {
+      delete item.rowNumber;
+      delete item.tanggalRaw;
+      return item;
+    });
+}
+
+function findPengeluaranRowById_(sh, id) {
+  const cleanId = String(id || '').trim();
+  if (!cleanId) return 0;
+
+  const rowMatch = cleanId.match(/^ROW-(\d+)$/i);
+  if (rowMatch) {
+    const rowNumber = Number(rowMatch[1]);
+    if (rowNumber >= CABE_START_ROW && rowNumber <= sh.getLastRow()) {
+      const values = sh.getRange(rowNumber, 2, 1, 5).getValues()[0];
+      const hasData = values.some(function(value) { return value !== '' && value !== null; });
+      if (hasData) return rowNumber;
+    }
+  }
+
+  const last = sh.getLastRow();
+  if (last < CABE_START_ROW) return 0;
+  const ids = sh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, 1).getDisplayValues();
+  const target = normalize_(cleanId);
+  for (let i = 0; i < ids.length; i++) {
+    if (normalize_(ids[i][0]) === target) return CABE_START_ROW + i;
+  }
+  return 0;
 }
 
 function apiAddPengeluaran_(ss, payload) {
@@ -2493,6 +2943,65 @@ function apiAddPengeluaran_(ss, payload) {
 
   quickAfterWrite_(ss);
   return { message: 'Pengeluaran tersimpan: ' + kategori + ' ' + formatRupiah_(jumlah) };
+}
+
+
+function apiUpdatePengeluaran_(ss, payload) {
+  payload = payload || {};
+  const sh = ss.getSheetByName(CABE_SHEETS.PENGELUARAN);
+  if (!sh) throw new Error('Sheet PENGELUARAN tidak ditemukan.');
+
+  const id = String(payload.id || payload.ID || payload.key || '').trim();
+  const row = findPengeluaranRowById_(sh, id);
+  if (!row) throw new Error('Data pengeluaran tidak ditemukan: ' + id);
+
+  const tanggal = parseDateInput_(payload.tanggal || payload.tanggalPengeluaran);
+  const kategori = String(payload.kategori || payload.kategoriPengeluaran || '').trim();
+  const jumlah = parseNumber_(payload.jumlah || payload.nominal || payload.total);
+  const metodeBayar = String(payload.metodeBayar || payload.metode || 'CASH').trim().toUpperCase();
+  const keterangan = String(payload.keterangan || payload.catatan || '').trim();
+
+  if (!tanggal) throw new Error('Tanggal pengeluaran tidak valid.');
+  if (!kategori) throw new Error('Kategori pengeluaran wajib diisi.');
+  if (jumlah <= 0) throw new Error('Jumlah pengeluaran wajib lebih dari 0.');
+  if (['CASH', 'TRANSFER', 'QRIS'].indexOf(metodeBayar) === -1) {
+    throw new Error('Metode bayar tidak valid: ' + metodeBayar);
+  }
+
+  sh.getRange(row, 2, 1, 5).setValues([[
+    tanggal,
+    kategori,
+    jumlah,
+    metodeBayar,
+    keterangan || 'Input dari Web/PWA'
+  ]]);
+  autoPengeluaran_(ss, sh, row, 4);
+
+  quickAfterWrite_(ss);
+  return {
+    id: String(sh.getRange(row, 1).getValue() || id),
+    message: 'Pengeluaran berhasil diperbaiki: ' + kategori + ' ' + formatRupiah_(jumlah)
+  };
+}
+
+function apiDeletePengeluaran_(ss, payload) {
+  payload = payload || {};
+  const sh = ss.getSheetByName(CABE_SHEETS.PENGELUARAN);
+  if (!sh) throw new Error('Sheet PENGELUARAN tidak ditemukan.');
+
+  const id = String(payload.id || payload.ID || payload.key || '').trim();
+  const row = findPengeluaranRowById_(sh, id);
+  if (!row) throw new Error('Data pengeluaran tidak ditemukan: ' + id);
+
+  const kategori = String(sh.getRange(row, 3).getValue() || 'Pengeluaran').trim();
+  const jumlah = parseNumber_(sh.getRange(row, 4).getValue());
+  sh.getRange(row, 1, 1, CABE_HEADERS[CABE_SHEETS.PENGELUARAN].length).clearContent();
+
+  quickAfterWrite_(ss);
+  return {
+    id: id,
+    message: 'Pengeluaran dihapus: ' + kategori + ' ' + formatRupiah_(jumlah)
+  };
 }
 
 
