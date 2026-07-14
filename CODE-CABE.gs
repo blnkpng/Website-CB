@@ -1,6 +1,6 @@
 /******************************************************
  * CABE STOCK SYSTEM - SETUP OTOMATIS GOOGLE SHEETS
- * Versi: V14 - Stok Barang Detail + Filter Tanggal + Responsive
+ * Versi: V19 - Dashboard Lengkap dan Sinkron Cashflow
  * Spreadsheet ID: 1UXtV-nDSPf0rjO40b_S8KXtwtq8c1rOCZeW1j1oD01c
  *
  * Cara pakai:
@@ -16,7 +16,7 @@ const CABE_TZ = 'Asia/Jakarta';
 const CABE_APP_PIN = '1234'; // GANTI PIN DI SINI
 const CABE_TOKEN_TTL_SECONDS = 21600; // 6 jam sesi login
 const CABE_BOOTSTRAP_CACHE_SECONDS = 20; // cache ringkas agar load data awal lebih cepat
-const CABE_BOOTSTRAP_CACHE_KEY = 'CABE_BOOTSTRAP_V14';
+const CABE_BOOTSTRAP_CACHE_KEY = 'CABE_BOOTSTRAP_V19';
 const CABE_WRITE_RESULT_CACHE_SECONDS = 21600; // 6 jam: cegah transaksi dobel saat koneksi lambat
 const CABE_WRITE_RESULT_CACHE_PREFIX = 'CABE_WRITE_RESULT_';
 const CABE_DRIVE_NOTA_PENJUALAN_FOLDER_ID = '1VHAvhRR0rydciTdKyxwyFVxQCNO7NOsh';
@@ -43,6 +43,7 @@ const CABE_SHEETS = {
   PENGELUARAN: 'PENGELUARAN',
   NOTA_PENJUALAN: 'NOTA PENJUALAN',
   AKSES_PERANGKAT: 'AKSES PERANGKAT',
+  KOREKSI_TRANSAKSI: 'KOREKSI TRANSAKSI',
   SETUP: 'SETUP'
 };
 
@@ -101,6 +102,11 @@ const CABE_HEADERS = {
     'ID Perangkat', 'Nama Pengguna', 'Nama Perangkat', 'ID Akses Aman',
     'Kunci Publik', 'Jumlah Pemakaian', 'Status', 'Tanggal Daftar',
     'Terakhir Login', 'Catatan'
+  ],
+  'KOREKSI TRANSAKSI': [
+    'ID Koreksi', 'Waktu Koreksi', 'Jenis', 'Tanggal Transaksi', 'ID Transaksi',
+    'Kode Barang', 'Nama Barang', 'Data Lama', 'Data Baru', 'Selisih Qty',
+    'Alasan', 'Aksi'
   ],
   'SETUP': ['Kunci', 'Isi / Pilihan', 'Keterangan']
 };
@@ -166,6 +172,7 @@ function setupCABE() {
     CABE_SHEETS.BAYAR_HUTANG,
     CABE_SHEETS.PENGELUARAN,
     CABE_SHEETS.AKSES_PERANGKAT,
+    CABE_SHEETS.KOREKSI_TRANSAKSI,
     CABE_SHEETS.SETUP
   ];
 
@@ -448,37 +455,44 @@ function buildDashboard_(ss) {
   const kpis = [
     ['KPI', 'Nilai'],
     ['Total Nilai Stok', `=SUM('${CABE_SHEETS.STOK_BARANG}'!I3:I)`],
-    ['Penjualan Bulan Ini', `=SUMIFS('${CABE_SHEETS.BARANG_TERJUAL}'!L:L;'${CABE_SHEETS.BARANG_TERJUAL}'!B:B;">="&EOMONTH(TODAY();-1)+1;'${CABE_SHEETS.BARANG_TERJUAL}'!B:B;"<="&EOMONTH(TODAY();0))`],
-    ['Pemasukan Cair Bulan Ini', `=SUM('${CABE_SHEETS.CASHFLOW}'!B6:B36)`],
-    ['Laba Masuk Bulan Ini', `=SUM('${CABE_SHEETS.CASHFLOW}'!E6:E36)`],
-    ['Sisa Laba Belum Dipindah', `=SUM('${CABE_SHEETS.CASHFLOW}'!G6:G36)`],
+    ['Total Stok Barang', `=SUM('${CABE_SHEETS.STOK_BARANG}'!E3:E)`],
+    ['Jumlah Jenis Barang', `=COUNTA('${CABE_SHEETS.STOK_BARANG}'!A3:A)`],
+    ['Penjualan Bulan Ini', `=SUMIFS('${CABE_SHEETS.BARANG_TERJUAL}'!L:L;'${CABE_SHEETS.BARANG_TERJUAL}'!B:B;">="&DATE('${CABE_SHEETS.CASHFLOW}'!B3;'${CABE_SHEETS.CASHFLOW}'!D3;1);'${CABE_SHEETS.BARANG_TERJUAL}'!B:B;"<="&EOMONTH(DATE('${CABE_SHEETS.CASHFLOW}'!B3;'${CABE_SHEETS.CASHFLOW}'!D3;1);0))`],
+    ['Pemasukan Cair', `=SUM('${CABE_SHEETS.CASHFLOW}'!B6:B36)`],
     ['Tagihan Belum H.C', `='${CABE_SHEETS.CASHFLOW}'!A43`],
+    ['Uang Keluar', `=SUM('${CABE_SHEETS.CASHFLOW}'!C6:C36)`],
+    ['Saldo Kas', `='${CABE_SHEETS.CASHFLOW}'!E40`],
+    ['Laba Masuk', `=SUM('${CABE_SHEETS.CASHFLOW}'!E6:E36)`],
+    ['Laba Sudah L.C', `=SUM('${CABE_SHEETS.CASHFLOW}'!F6:F36)`],
+    ['Sisa Laba', `=SUM('${CABE_SHEETS.CASHFLOW}'!G6:G36)`],
     ['Hutang Supplier Belum Lunas', `=SUMIF('${CABE_SHEETS.HUTANG}'!G:G;"<>LUNAS";'${CABE_SHEETS.HUTANG}'!F:F)`]
   ];
 
-  sh.getRange(3, 1, kpis.length, 2).setValues(kpis.map(r => [r[0], '']));
+  sh.getRange(3, 1, kpis.length, 2).setValues(kpis.map(function(r) { return [r[0], '']; }));
   for (let i = 1; i < kpis.length; i++) sh.getRange(3 + i, 2).setFormula(kpis[i][1]);
 
   sh.getRange('A3:B3').setBackground(CABE_TITLE_COLOR).setFontColor('#ffffff').setFontWeight('bold');
-  sh.getRange('A4:A10').setFontWeight('bold');
-  sh.getRange('B4:B10').setNumberFormat('"Rp"#,##0');
-  sh.getRange('A11:H11').merge().setValue('STOK PERLU DICEK')
+  sh.getRange('A4:A15').setFontWeight('bold');
+  sh.getRange('B4:B4').setNumberFormat('"Rp"#,##0');
+  sh.getRange('B5:B6').setNumberFormat('#,##0.00');
+  sh.getRange('B7:B15').setNumberFormat('"Rp"#,##0');
+  sh.getRange('A17:H17').merge().setValue('STOK PERLU DICEK')
     .setBackground(CABE_TITLE_COLOR).setFontColor('#ffffff').setFontWeight('bold')
     .setHorizontalAlignment('center');
-  sh.getRange('A12').setFormula(`=IFERROR(FILTER('${CABE_SHEETS.STOK_BARANG}'!A3:G;'${CABE_SHEETS.STOK_BARANG}'!G3:G<>"AMAN";'${CABE_SHEETS.STOK_BARANG}'!A3:A<>"");"Semua stok aman")`);
+  sh.getRange('A18').setFormula(`=IFERROR(FILTER('${CABE_SHEETS.STOK_BARANG}'!A3:G;'${CABE_SHEETS.STOK_BARANG}'!G3:G<>"AMAN";'${CABE_SHEETS.STOK_BARANG}'!A3:A<>"");"Semua stok aman")`);
 
-  sh.getRange('A20:H20').merge().setValue('HUTANG BELUM LUNAS')
+  sh.getRange('A30:H30').merge().setValue('HUTANG BELUM LUNAS')
     .setBackground(CABE_TITLE_COLOR).setFontColor('#ffffff').setFontWeight('bold')
     .setHorizontalAlignment('center');
-  sh.getRange('A21').setFormula(`=IFERROR(FILTER('${CABE_SHEETS.HUTANG}'!A3:H;'${CABE_SHEETS.HUTANG}'!G3:G<>"LUNAS";'${CABE_SHEETS.HUTANG}'!A3:A<>"");"Tidak ada hutang terbuka")`);
-  sh.getRange('B21:B60').setNumberFormat('dd/mm/yyyy');
-  sh.getRange('D21:F60').setNumberFormat('"Rp"#,##0');
-  sh.getRange('H21:H60').setNumberFormat('dd/mm/yyyy');
-  sh.getRange('A12:H60').setFontSize(10);
+  sh.getRange('A31').setFormula(`=IFERROR(FILTER('${CABE_SHEETS.HUTANG}'!A3:H;'${CABE_SHEETS.HUTANG}'!G3:G<>"LUNAS";'${CABE_SHEETS.HUTANG}'!A3:A<>"");"Tidak ada hutang terbuka")`);
+  sh.getRange('B31:B70').setNumberFormat('dd/mm/yyyy');
+  sh.getRange('D31:F70').setNumberFormat('"Rp"#,##0');
+  sh.getRange('H31:H70').setNumberFormat('dd/mm/yyyy');
+  sh.getRange('A18:H70').setFontSize(10);
 
   sh.setFrozenRows(1);
   sh.setColumnWidths(1, 8, 140);
-  sh.getRange('A1:H60').setFontFamily('Arial');
+  sh.getRange('A1:H70').setFontFamily('Arial');
 }
 
 /***********************
@@ -1403,6 +1417,13 @@ function setupFormats_(ss) {
     aksesPerangkat.getRange('F3:F').setNumberFormat('0');
     aksesPerangkat.getRange('H3:I').setNumberFormat(datetimeFormat);
   }
+
+  const koreksi = ss.getSheetByName(CABE_SHEETS.KOREKSI_TRANSAKSI);
+  if (koreksi) {
+    koreksi.getRange('B3:B').setNumberFormat(datetimeFormat);
+    koreksi.getRange('D3:D').setNumberFormat(dateFormat);
+    koreksi.getRange('J3:J').setNumberFormat(qtyFormat);
+  }
 }
 
 function applyNumberFormatsHPP_(sh) {
@@ -1781,7 +1802,7 @@ function apiHandleCABE_(action, payload, authToken) {
   requireCABEAuth_(authToken);
 
   const ss = SpreadsheetApp.openById(CABE_SPREADSHEET_ID);
-  const writeActions = ['ADD_BARANG_MASUK', 'ADD_BARANG_TERJUAL', 'ADD_STOK_OPNAME', 'ADD_BAYAR_HUTANG', 'ADD_PENGELUARAN', 'UPDATE_PENGELUARAN', 'DELETE_PENGELUARAN', 'UPDATE_HC', 'UPDATE_LC', 'UPDATE_NOTA_HC', 'GENERATE_NOTA_PENJUALAN', 'REGISTER_FACE_DEVICE', 'DISABLE_FACE_DEVICE'];
+  const writeActions = ['ADD_BARANG_MASUK', 'ADD_BARANG_TERJUAL', 'SAVE_KOREKSI_TRANSAKSI', 'ADD_STOK_OPNAME', 'ADD_BAYAR_HUTANG', 'ADD_PENGELUARAN', 'UPDATE_PENGELUARAN', 'DELETE_PENGELUARAN', 'UPDATE_HC', 'UPDATE_LC', 'UPDATE_NOTA_HC', 'GENERATE_NOTA_PENJUALAN', 'REGISTER_FACE_DEVICE', 'DISABLE_FACE_DEVICE'];
 
   if (writeActions.indexOf(action) >= 0) {
     return withCABEWriteLock_(function() {
@@ -1807,8 +1828,10 @@ function apiRouteCABE_(ss, action, payload) {
     case 'GET_PENGELUARAN_HISTORY': return apiGetPengeluaranHistory_(ss);
     case 'GET_NOTA_HISTORY': return apiGetNotaHistory_(ss);
     case 'GET_TRANSACTION_SUMMARY': return apiGetTransactionSummary_(ss);
+    case 'GET_KOREKSI_TRANSAKSI': return apiGetKoreksiTransaksi_(ss, payload);
     case 'ADD_BARANG_MASUK': return apiAddBarangMasuk_(ss, payload);
     case 'ADD_BARANG_TERJUAL': return apiAddBarangTerjual_(ss, payload);
+    case 'SAVE_KOREKSI_TRANSAKSI': return apiSaveKoreksiTransaksi_(ss, payload);
     case 'ADD_STOK_OPNAME': return apiAddStokOpname_(ss, payload);
     case 'ADD_BAYAR_HUTANG': return apiAddBayarHutang_(ss, payload);
     case 'ADD_PENGELUARAN': return apiAddPengeluaran_(ss, payload);
@@ -2021,16 +2044,23 @@ function apiGetBootstrap_(ss, payload) {
     }
   }
 
+  // Data yang dipakai Dashboard juga dikirim ke halaman lain. Baca sekali agar refresh lebih cepat.
+  const masterBarang = apiGetMasterBarang_(ss);
+  const supplier = apiGetSupplier_(ss);
+  const stok = apiGetStokBarang_(ss);
+  const hutang = apiGetHutang_(ss);
+  const cashflow = apiGetCashflow_(ss);
+
   const data = {
-    dashboard: apiGetDashboard_(ss),
-    masterBarang: apiGetMasterBarang_(ss),
-    supplier: apiGetSupplier_(ss),
-    stok: apiGetStokBarang_(ss),
+    dashboard: buildDashboardPayload_(cashflow, stok, hutang),
+    masterBarang: masterBarang,
+    supplier: supplier,
+    stok: stok,
     stockDetail: apiGetStokDetail_(ss, {}),
     stokOpnameHistory: apiGetStokOpnameHistory_(ss),
-    hutang: apiGetHutang_(ss),
+    hutang: hutang,
     bayarHutangHistory: apiGetBayarHutangHistory_(ss),
-    cashflow: apiGetCashflow_(ss),
+    cashflow: cashflow,
     pengeluaranHistory: apiGetPengeluaranHistory_(ss),
     notaHistory: apiGetNotaHistory_(ss),
     transactionSummary: apiGetTransactionSummary_(ss),
@@ -2127,20 +2157,67 @@ function quickAfterWrite_(ss) {
 }
 
 function apiGetDashboard_(ss) {
-  // Tidak refreshFormulaCABE() di request baca: jauh lebih cepat.
-  // Formula/view disegarkan setelah transaksi tersimpan atau lewat menu Refresh Formula View.
-  const dash = ss.getSheetByName(CABE_SHEETS.DASHBOARD);
+  // Dashboard web dihitung langsung dari sumber data agar selalu sama dengan Cashflow.
+  // Tidak lagi bergantung pada nilai formula di sheet DASHBOARD yang dapat tertinggal cache.
+  return buildDashboardPayload_(apiGetCashflow_(ss), apiGetStokBarang_(ss), apiGetHutang_(ss));
+}
+
+function buildDashboardPayload_(cashflow, stokRows, hutangRows) {
+  cashflow = cashflow || {};
+  stokRows = stokRows || [];
+  hutangRows = hutangRows || [];
+
+  const totalNilaiStok = stokRows.reduce(function(sum, item) {
+    return sum + parseNumber_(item.nilaiStok);
+  }, 0);
+
+  const stokPerSatuan = {};
+  stokRows.forEach(function(item) {
+    const satuan = String(item.satuan || 'Kg').trim() || 'Kg';
+    stokPerSatuan[satuan] = (stokPerSatuan[satuan] || 0) + parseNumber_(item.stok);
+  });
+  const satuanList = Object.keys(stokPerSatuan);
+  const satuanStokBarang = satuanList.length === 1 ? satuanList[0] : (satuanList.length ? 'unit campuran' : 'Kg');
+  const totalStokBarang = satuanList.reduce(function(sum, satuan) {
+    return sum + parseNumber_(stokPerSatuan[satuan]);
+  }, 0);
+
+  const hutangBelumLunas = hutangRows.reduce(function(sum, item) {
+    return sum + parseNumber_(item.sisaHutang);
+  }, 0);
+
+  const stokPerluDicek = stokRows
+    .filter(function(item) { return String(item.status || '').toUpperCase() !== 'AMAN'; })
+    .map(function(item) {
+      return {
+        kode: item.kode,
+        nama: item.nama,
+        kategori: item.kategori,
+        satuan: item.satuan,
+        stok: parseNumber_(item.stok),
+        minimum: parseNumber_(item.minimum),
+        status: item.status
+      };
+    });
+
   return {
-    totalNilaiStok: parseNumber_(dash.getRange('B4').getValue()),
-    penjualanBulanIni: parseNumber_(dash.getRange('B5').getValue()),
-    pemasukanCairBulanIni: parseNumber_(dash.getRange('B6').getValue()),
-    labaMasukBulanIni: parseNumber_(dash.getRange('B7').getValue()),
-    sisaLabaBelumDipindah: parseNumber_(dash.getRange('B8').getValue()),
-    sisaLabaBulanIni: parseNumber_(dash.getRange('B8').getValue()),
-    tagihanBelumHC: parseNumber_(dash.getRange('B9').getValue()),
-    hutangSupplierBelumLunas: parseNumber_(dash.getRange('B10').getValue()),
-    hutangBelumLunas: parseNumber_(dash.getRange('B10').getValue()),
-    stokPerluDicek: apiGetLowStock_(ss)
+    totalNilaiStok: totalNilaiStok,
+    totalStokBarang: totalStokBarang,
+    satuanStokBarang: satuanStokBarang,
+    stokPerSatuan: stokPerSatuan,
+    jumlahJenisBarang: stokRows.length,
+    penjualanBulanIni: parseNumber_(cashflow.penjualan),
+    pemasukanCairBulanIni: parseNumber_(cashflow.pemasukanCair),
+    pengeluaranBulanIni: parseNumber_(cashflow.pengeluaran),
+    saldoKas: parseNumber_(cashflow.saldo),
+    labaMasukBulanIni: parseNumber_(cashflow.labaMasuk),
+    labaDipindahBulanIni: parseNumber_(cashflow.labaDipindah),
+    sisaLabaBelumDipindah: parseNumber_(cashflow.sisaLaba),
+    sisaLabaBulanIni: parseNumber_(cashflow.sisaLaba),
+    tagihanBelumHC: parseNumber_(cashflow.tagihanBelumHC),
+    hutangSupplierBelumLunas: hutangBelumLunas,
+    hutangBelumLunas: hutangBelumLunas,
+    stokPerluDicek: stokPerluDicek
   };
 }
 
@@ -2366,44 +2443,64 @@ function apiGetBayarHutangHistory_(ss) {
 
 function apiGetCashflow_(ss) {
   const sh = ss.getSheetByName(CABE_SHEETS.CASHFLOW);
-  const salesProfitMap = getSalesProfitMapByDate_(ss);
+  if (!sh) throw new Error('Sheet CASHFLOW BISNIS tidak ditemukan.');
 
+  const salesProfitMap = getSalesProfitMapByDate_(ss);
+  const saldoAwal = parseNumber_(sh.getRange('G3').getValue());
+  let saldoBerjalan = saldoAwal;
+
+  // Nilai H.C/L.C dihitung langsung dari checkbox dan transaksi penjualan.
+  // Dengan begitu ringkasan web tidak bergantung pada formula summary yang mungkin belum tersinkron.
   const rows = sh.getRange('A6:I36').getValues()
-    .filter(r => r[0])
-    .map(r => {
+    .filter(function(r) { return r[0]; })
+    .map(function(r) {
       const key = formatCashflowKey_(r[0]);
       const sale = salesProfitMap[key] || { penjualan: 0, laba: 0 };
+      const hc = r[7] === true;
+      const lc = r[8] === true;
+      const penjualan = parseNumber_(sale.penjualan);
+      const laba = parseNumber_(sale.laba);
+      const pemasukan = hc ? penjualan : 0;
+      const pengeluaran = parseNumber_(r[2]);
+      const labaMasuk = hc ? laba : 0;
+      const labaKeluar = lc ? labaMasuk : 0;
+      const labaBersih = labaMasuk - labaKeluar;
+      saldoBerjalan += pemasukan - pengeluaran;
+
       return {
         id: key,
         key: key,
         tanggal: formatDateApi_(r[0]),
-        penjualan: sale.penjualan,
-        pemasukan: parseNumber_(r[1]),
-        pengeluaran: parseNumber_(r[2]),
-        saldo: parseNumber_(r[3]),
-        laba: sale.laba,
-        labaMasuk: parseNumber_(r[4]),
-        labaKeluar: parseNumber_(r[5]),
-        labaBersih: parseNumber_(r[6]),
-        hc: r[7] === true,
-        lc: r[8] === true
+        penjualan: penjualan,
+        pemasukan: pemasukan,
+        pengeluaran: pengeluaran,
+        saldo: saldoBerjalan,
+        laba: laba,
+        labaMasuk: labaMasuk,
+        labaKeluar: labaKeluar,
+        labaBersih: labaBersih,
+        hc: hc,
+        lc: lc
       };
     });
 
-  const totalPenjualan = rows.reduce((sum, row) => sum + parseNumber_(row.penjualan), 0);
-  const pemasukanCair = parseNumber_(sh.getRange('A40').getValue());
-  const pengeluaran = parseNumber_(sh.getRange('C40').getValue());
-  const saldo = parseNumber_(sh.getRange('E40').getValue());
-  const labaMasuk = parseNumber_(sh.getRange('G40').getValue());
-  const labaDipindah = parseNumber_(sh.getRange('H40').getValue());
-  const sisaLaba = parseNumber_(sh.getRange('I40').getValue());
-  const tagihanBelumHC = parseNumber_(sh.getRange('A43').getValue());
+  const totalPenjualan = rows.reduce(function(sum, row) { return sum + parseNumber_(row.penjualan); }, 0);
+  const pemasukanCair = rows.reduce(function(sum, row) { return sum + parseNumber_(row.pemasukan); }, 0);
+  const pengeluaran = rows.reduce(function(sum, row) { return sum + parseNumber_(row.pengeluaran); }, 0);
+  const labaMasuk = rows.reduce(function(sum, row) { return sum + parseNumber_(row.labaMasuk); }, 0);
+  const labaDipindah = rows.reduce(function(sum, row) { return sum + parseNumber_(row.labaKeluar); }, 0);
+  const sisaLaba = rows.reduce(function(sum, row) { return sum + parseNumber_(row.labaBersih); }, 0);
+  const tagihanBelumHC = rows.reduce(function(sum, row) {
+    return sum + (row.hc ? 0 : parseNumber_(row.penjualan));
+  }, 0);
+  const saldo = saldoAwal + pemasukanCair - pengeluaran;
 
   return {
     penjualan: totalPenjualan,
     pemasukan: pemasukanCair,
     pemasukanCair: pemasukanCair,
     pengeluaran: pengeluaran,
+    saldoAwal: saldoAwal,
     saldo: saldo,
     labaMasuk: labaMasuk,
     labaDipindah: labaDipindah,
@@ -2688,6 +2785,348 @@ function apiGetLatestSalePrices_(ss, limit) {
 
   return result;
 }
+
+
+
+/***********************
+ * KOREKSI TRANSAKSI BERBASIS TANGGAL
+ ***********************/
+function normalizeCorrectionType_(value) {
+  const type = String(value || '').trim().toUpperCase();
+  if (type !== 'MASUK' && type !== 'TERJUAL') throw new Error('Jenis koreksi harus MASUK atau TERJUAL.');
+  return type;
+}
+
+function dateKeyCorrection_(value) {
+  const date = parseDateInput_(value);
+  return date ? Utilities.formatDate(date, CABE_TZ, 'yyyy-MM-dd') : '';
+}
+
+function apiGetKoreksiTransaksi_(ss, payload) {
+  payload = payload || {};
+  const type = normalizeCorrectionType_(payload.type || payload.jenis);
+  const tanggal = parseDateInput_(payload.tanggal || payload.date);
+  if (!tanggal) throw new Error('Tanggal koreksi wajib dipilih.');
+
+  const targetKey = dateKeyCorrection_(tanggal);
+  const sheetName = type === 'MASUK' ? CABE_SHEETS.BARANG_MASUK : CABE_SHEETS.BARANG_TERJUAL;
+  const sh = ss.getSheetByName(sheetName);
+  if (!sh) throw new Error('Sheet ' + sheetName + ' tidak ditemukan.');
+
+  const last = sh.getLastRow();
+  const width = CABE_HEADERS[sheetName].length;
+  const rows = last < CABE_START_ROW ? [] : sh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, width).getValues();
+  const result = [];
+
+  rows.forEach(function(row) {
+    if (!row[0] || dateKeyCorrection_(row[1]) !== targetKey) return;
+    if (type === 'MASUK') {
+      result.push({
+        id: String(row[0] || '').trim(),
+        tanggal: formatDateApi_(row[1]),
+        kode: String(row[2] || '').trim(),
+        nama: String(row[3] || '').trim(),
+        qty: parseNumber_(row[4]),
+        satuan: String(row[5] || 'Kg').trim(),
+        harga: parseNumber_(row[6]),
+        totalModal: parseNumber_(row[7]),
+        supplier: String(row[8] || '').trim(),
+        noNota: String(row[9] || '').trim(),
+        statusBayar: String(row[10] || 'TUNAI').trim().toUpperCase(),
+        jatuhTempo: formatDateApi_(row[11]),
+        keterangan: String(row[12] || '').trim(),
+        updatedAt: formatDateTimeApi_(row[14])
+      });
+    } else {
+      result.push({
+        id: String(row[0] || '').trim(),
+        tanggal: formatDateApi_(row[1]),
+        kode: String(row[2] || '').trim(),
+        nama: String(row[3] || '').trim(),
+        qty: parseNumber_(row[4]),
+        satuan: String(row[5] || 'Kg').trim(),
+        hpp: parseNumber_(row[6]),
+        laba: parseNumber_(row[7]),
+        hargaJual: parseNumber_(row[8]),
+        totalHpp: parseNumber_(row[9]),
+        totalLaba: parseNumber_(row[10]),
+        totalJual: parseNumber_(row[11]),
+        keterangan: String(row[14] || '').trim(),
+        updatedAt: formatDateTimeApi_(row[16])
+      });
+    }
+  });
+
+  return {
+    type: type,
+    tanggal: targetKey,
+    tanggalLabel: formatDateApi_(tanggal),
+    rows: result,
+    notaInfo: type === 'TERJUAL' ? getCorrectionNotaInfo_(ss, tanggal) : []
+  };
+}
+
+function getCorrectionNotaInfo_(ss, tanggal) {
+  const sh = ss.getSheetByName(CABE_SHEETS.NOTA_PENJUALAN);
+  if (!sh || sh.getLastRow() < CABE_START_ROW) return [];
+  const target = parseDateInput_(tanggal);
+  if (!target) return [];
+  target.setHours(0, 0, 0, 0);
+
+  const values = sh.getRange(CABE_START_ROW, 1, sh.getLastRow() - CABE_START_ROW + 1, 10).getValues();
+  return values.filter(function(row) {
+    const start = parseDateInput_(row[1]);
+    const end = parseDateInput_(row[2]);
+    if (!row[0] || !start || !end) return false;
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    return target >= start && target <= end;
+  }).map(function(row) {
+    const hcText = normalize_(row[4]);
+    const lcText = normalize_(row[5]);
+    return {
+      noNota: String(row[0] || '').trim(),
+      hc: hcText === 'sudah h.c' || hcText === 'sudah hc' || hcText === 'true' || hcText === '1',
+      lc: lcText === 'sudah l.c' || lcText === 'sudah lc' || lcText === 'true' || lcText === '1',
+      tanggalAwal: formatDateApi_(row[1]),
+      tanggalAkhir: formatDateApi_(row[2])
+    };
+  });
+}
+
+function apiSaveKoreksiTransaksi_(ss, payload) {
+  payload = payload || {};
+  const type = normalizeCorrectionType_(payload.type || payload.jenis);
+  const targetDate = parseDateInput_(payload.tanggal || payload.date);
+  const targetKey = dateKeyCorrection_(targetDate);
+  const alasan = String(payload.alasan || payload.reason || '').trim();
+  const items = Array.isArray(payload.items) ? payload.items : [];
+
+  if (!targetDate) throw new Error('Tanggal koreksi wajib dipilih.');
+  if (!alasan) throw new Error('Alasan koreksi wajib diisi.');
+  if (!items.length) throw new Error('Tidak ada data koreksi yang dikirim.');
+
+  const sheetName = type === 'MASUK' ? CABE_SHEETS.BARANG_MASUK : CABE_SHEETS.BARANG_TERJUAL;
+  const sh = ss.getSheetByName(sheetName);
+  if (!sh) throw new Error('Sheet ' + sheetName + ' tidak ditemukan.');
+  const last = sh.getLastRow();
+  if (last < CABE_START_ROW) throw new Error('Belum ada transaksi yang dapat dikoreksi.');
+
+  const width = CABE_HEADERS[sheetName].length;
+  const values = sh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, width).getValues();
+  const rowMap = {};
+  values.forEach(function(row, index) {
+    const id = String(row[0] || '').trim();
+    if (id) rowMap[normalize_(id)] = { rowIndex: CABE_START_ROW + index, values: row };
+  });
+
+  const changes = [];
+  items.forEach(function(item) {
+    const id = String(item.id || item.ID || '').trim();
+    const found = rowMap[normalize_(id)];
+    if (!id || !found) throw new Error('Transaksi tidak ditemukan atau sudah berubah: ' + (id || '-'));
+    if (dateKeyCorrection_(found.values[1]) !== targetKey) throw new Error('Tanggal transaksi ' + id + ' tidak sesuai tanggal koreksi. Muat ulang data.');
+
+    const cancelled = parseBooleanApi_(item.cancelled || item.dibatalkan);
+    const newQty = cancelled ? 0 : parseNumber_(item.qty);
+    if (newQty < 0) throw new Error('Qty tidak boleh kurang dari 0 untuk ' + found.values[3] + '.');
+    if (!cancelled && newQty <= 0) throw new Error('Qty harus lebih dari 0 untuk ' + found.values[3] + ', atau pilih Batalkan transaksi.');
+
+    if (type === 'MASUK') {
+      const oldData = {
+        qty: parseNumber_(found.values[4]),
+        harga: parseNumber_(found.values[6]),
+        supplier: String(found.values[8] || '').trim(),
+        statusBayar: String(found.values[10] || 'TUNAI').trim().toUpperCase(),
+        keterangan: String(found.values[12] || '').trim(),
+        noNota: String(found.values[9] || '').trim()
+      };
+      const newData = {
+        qty: newQty,
+        harga: parseNumber_(item.harga),
+        supplier: String(item.supplier || '').trim(),
+        statusBayar: normalizeStatusBayarApi_({ statusBayar: item.statusBayar || oldData.statusBayar }),
+        keterangan: normalizeCorrectionNote_(item.keterangan, cancelled),
+        cancelled: cancelled
+      };
+      if (newData.harga < 0) throw new Error('Harga tidak boleh kurang dari 0 untuk ' + found.values[3] + '.');
+      if (correctionDataChanged_(type, oldData, newData)) {
+        changes.push({ type: type, id: id, rowIndex: found.rowIndex, kode: found.values[2], nama: found.values[3], noNota: oldData.noNota, oldData: oldData, newData: newData });
+      }
+    } else {
+      const oldData = {
+        qty: parseNumber_(found.values[4]),
+        hpp: parseNumber_(found.values[6]),
+        laba: parseNumber_(found.values[7]),
+        keterangan: String(found.values[14] || '').trim()
+      };
+      const newData = {
+        qty: newQty,
+        hpp: parseNumber_(item.hpp),
+        laba: parseNumber_(item.laba),
+        keterangan: normalizeCorrectionNote_(item.keterangan, cancelled),
+        cancelled: cancelled
+      };
+      if (newData.hpp < 0 || newData.laba < 0) throw new Error('HPP dan laba tidak boleh kurang dari 0 untuk ' + found.values[3] + '.');
+      if (correctionDataChanged_(type, oldData, newData)) {
+        changes.push({ type: type, id: id, rowIndex: found.rowIndex, kode: found.values[2], nama: found.values[3], oldData: oldData, newData: newData });
+      }
+    }
+  });
+
+  if (!changes.length) return { message: 'Tidak ada angka yang berubah.', changed: 0, cancelled: 0 };
+
+  validateCorrectionStock_(ss, type, changes);
+  if (type === 'MASUK') validateCorrectionDebt_(ss, values, changes);
+
+  changes.forEach(function(change) {
+    const row = change.rowIndex;
+    if (type === 'MASUK') {
+      sh.getRange(row, 5).setValue(change.newData.qty);
+      sh.getRange(row, 7).setValue(change.newData.harga);
+      sh.getRange(row, 9).setValue(change.newData.supplier);
+      sh.getRange(row, 11).setValue(change.newData.statusBayar);
+      sh.getRange(row, 13).setValue(change.newData.keterangan);
+      const autoCol = normalize_(change.oldData.statusBayar) !== normalize_(change.newData.statusBayar) ? 11 :
+        (normalize_(change.oldData.supplier) !== normalize_(change.newData.supplier) ? 9 : 5);
+      autoBarangMasuk_(ss, sh, row, autoCol);
+      change.newData.noNota = String(sh.getRange(row, 10).getValue() || '').trim();
+      change.newData.totalModal = parseNumber_(change.newData.qty) * parseNumber_(change.newData.harga);
+    } else {
+      sh.getRange(row, 5).setValue(change.newData.qty);
+      sh.getRange(row, 7).setValue(change.newData.hpp);
+      sh.getRange(row, 8).setValue(change.newData.laba);
+      sh.getRange(row, 15).setValue(change.newData.keterangan);
+      autoBarangTerjual_(ss, sh, row, 8);
+      change.newData.hargaJual = parseNumber_(change.newData.hpp) + parseNumber_(change.newData.laba);
+      change.newData.totalJual = parseNumber_(change.newData.qty) * change.newData.hargaJual;
+    }
+    appendCorrectionAudit_(ss, type, targetDate, change, alasan);
+  });
+
+  quickAfterWrite_(ss);
+  const cancelledCount = changes.filter(function(change) { return change.newData.cancelled; }).length;
+  return {
+    message: changes.length + ' transaksi berhasil dikoreksi' + (cancelledCount ? ', termasuk ' + cancelledCount + ' dibatalkan.' : '.'),
+    changed: changes.length,
+    cancelled: cancelledCount,
+    tanggal: targetKey
+  };
+}
+
+function normalizeCorrectionNote_(value, cancelled) {
+  let note = String(value || '').trim().replace(/^\[DIBATALKAN WEB\]\s*/i, '');
+  if (cancelled) note = '[DIBATALKAN WEB] ' + (note || 'Dibatalkan melalui menu koreksi.');
+  return note;
+}
+
+function correctionDataChanged_(type, oldData, newData) {
+  const diff = function(a, b) { return Math.abs(parseNumber_(a) - parseNumber_(b)) > 0.000001; };
+  if (diff(oldData.qty, newData.qty) || String(oldData.keterangan || '') !== String(newData.keterangan || '')) return true;
+  if (type === 'MASUK') {
+    return diff(oldData.harga, newData.harga) || normalize_(oldData.supplier) !== normalize_(newData.supplier) || normalize_(oldData.statusBayar) !== normalize_(newData.statusBayar);
+  }
+  return diff(oldData.hpp, newData.hpp) || diff(oldData.laba, newData.laba);
+}
+
+function validateCorrectionStock_(ss, type, changes) {
+  const stockRows = apiGetStokBarang_(ss);
+  const stockMap = {};
+  stockRows.forEach(function(item) {
+    const key = normalize_(item.kode || item.nama);
+    if (key) stockMap[key] = parseNumber_(item.stok);
+    if (item.nama) stockMap['nama:' + normalize_(item.nama)] = parseNumber_(item.stok);
+  });
+
+  const deltaMap = {};
+  const labelMap = {};
+  changes.forEach(function(change) {
+    const key = normalize_(change.kode) || 'nama:' + normalize_(change.nama);
+    const oldQty = parseNumber_(change.oldData.qty);
+    const newQty = parseNumber_(change.newData.qty);
+    const delta = type === 'MASUK' ? (newQty - oldQty) : (oldQty - newQty);
+    deltaMap[key] = (deltaMap[key] || 0) + delta;
+    labelMap[key] = change.nama;
+  });
+
+  Object.keys(deltaMap).forEach(function(key) {
+    const current = Object.prototype.hasOwnProperty.call(stockMap, key) ? stockMap[key] : (stockMap['nama:' + normalize_(labelMap[key])] || 0);
+    const proposed = current + deltaMap[key];
+    // Koreksi yang memperbaiki stok negatif tetap boleh. Yang membuatnya makin negatif ditolak.
+    if (proposed < -0.000001 && proposed < current - 0.000001) {
+      throw new Error('Koreksi membuat stok ' + labelMap[key] + ' menjadi ' + formatQty_(proposed) + ' Kg. Periksa qty terlebih dahulu.');
+    }
+  });
+}
+
+function validateCorrectionDebt_(ss, allMasukRows, changes) {
+  const paymentSheet = ss.getSheetByName(CABE_SHEETS.BAYAR_HUTANG);
+  if (!paymentSheet || paymentSheet.getLastRow() < CABE_START_ROW) return;
+  const paymentRows = paymentSheet.getRange(CABE_START_ROW, 1, paymentSheet.getLastRow() - CABE_START_ROW + 1, 10).getValues();
+  const paidByNota = {};
+  paymentRows.forEach(function(row) {
+    const note = String(row[3] || '').trim();
+    if (note) paidByNota[normalize_(note)] = (paidByNota[normalize_(note)] || 0) + parseNumber_(row[5]);
+  });
+
+  const changeById = {};
+  const affectedNotes = {};
+  changes.forEach(function(change) {
+    changeById[normalize_(change.id)] = change;
+    if (change.noNota) affectedNotes[normalize_(change.noNota)] = change.noNota;
+  });
+
+  Object.keys(affectedNotes).forEach(function(noteKey) {
+    const paid = paidByNota[noteKey] || 0;
+    if (paid <= 0) return;
+
+    changes.filter(function(change) { return normalize_(change.noNota) === noteKey; }).forEach(function(change) {
+      if (normalize_(change.oldData.supplier) !== normalize_(change.newData.supplier) || normalize_(change.oldData.statusBayar) !== normalize_(change.newData.statusBayar)) {
+        throw new Error('Supplier atau status nota ' + affectedNotes[noteKey] + ' tidak dapat diubah karena sudah memiliki riwayat pembayaran.');
+      }
+    });
+
+    let projectedTotal = 0;
+    allMasukRows.forEach(function(row) {
+      if (normalize_(row[9]) !== noteKey) return;
+      const change = changeById[normalize_(row[0])];
+      if (change) {
+        if (normalize_(change.newData.statusBayar) === 'hutang') projectedTotal += parseNumber_(change.newData.qty) * parseNumber_(change.newData.harga);
+      } else if (normalize_(row[10]) === 'hutang') {
+        projectedTotal += parseNumber_(row[4]) * parseNumber_(row[6]);
+      }
+    });
+
+    if (projectedTotal + 0.000001 < paid) {
+      throw new Error('Total koreksi nota ' + affectedNotes[noteKey] + ' menjadi ' + formatRupiah_(projectedTotal) + ', lebih kecil dari pembayaran yang sudah tercatat ' + formatRupiah_(paid) + '.');
+    }
+  });
+}
+
+function appendCorrectionAudit_(ss, type, tanggal, change, alasan) {
+  let sh = ss.getSheetByName(CABE_SHEETS.KOREKSI_TRANSAKSI);
+  if (!sh) sh = prepareSheet_(ss, CABE_SHEETS.KOREKSI_TRANSAKSI, false);
+  const row = getNextEmptyRow_(sh, CABE_START_ROW, 1);
+  const action = change.newData.cancelled ? 'DIBATALKAN' : 'DIKOREKSI';
+  sh.getRange(row, 1, 1, 12).setValues([[
+    makeId_('KR'),
+    new Date(),
+    type === 'MASUK' ? 'BARANG MASUK' : 'BARANG TERJUAL',
+    tanggal,
+    change.id,
+    change.kode || '',
+    change.nama || '',
+    JSON.stringify(change.oldData),
+    JSON.stringify(change.newData),
+    parseNumber_(change.newData.qty) - parseNumber_(change.oldData.qty),
+    alasan,
+    action
+  ]]);
+  sh.getRange(row, 2).setNumberFormat('dd/mm/yyyy hh:mm');
+  sh.getRange(row, 4).setNumberFormat('dd/mm/yyyy');
+  sh.getRange(row, 10).setNumberFormat('#,##0.##');
+}
+
 
 function apiAddBarangMasuk_(ss, payload) {
   const sh = ss.getSheetByName(CABE_SHEETS.BARANG_MASUK);
@@ -3420,6 +3859,7 @@ function setColumnWidths_(sh, name) {
     'NOTA PENJUALAN': [160, 120, 120, 140, 120, 120, 260, 260, 140, 140],
     'CASHFLOW BISNIS': [110, 120, 120, 120, 120, 120, 120, 55, 55],
     'AKSES PERANGKAT': [150, 160, 180, 230, 360, 110, 100, 150, 150, 260],
+    'KOREKSI TRANSAKSI': [170, 150, 150, 120, 180, 110, 180, 320, 320, 110, 260, 120],
     'SETUP': [160, 180, 280]
   };
   const arr = widths[name] || [];
