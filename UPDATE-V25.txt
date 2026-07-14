@@ -1,0 +1,8 @@
+WEBSITE CABE V25 - DASHBOARD LEBIH RINGKAS
+
+- Menu Kontrol Keuangan dihapus dari sidebar dan navigasi mobile.
+- Tombol Kontrol Keuangan ditambahkan pada halaman Cashflow.
+- Seluruh panel tampil sebagai modal besar di desktop dan layar penuh di HP.
+- Tombol Refresh dan Tutup tersedia pada header modal.
+- Cetak laporan bulanan tetap berfungsi.
+- Cache PWA dinaikkan ke V25.

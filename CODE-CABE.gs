@@ -1,6 +1,6 @@
 /******************************************************
  * CABE STOCK SYSTEM - SETUP OTOMATIS GOOGLE SHEETS
- * Versi: V19 - Dashboard Lengkap dan Sinkron Cashflow
+ * Versi: V21 - Kontrol Keuangan Lengkap
  * Spreadsheet ID: 1UXtV-nDSPf0rjO40b_S8KXtwtq8c1rOCZeW1j1oD01c
  *
  * Cara pakai:
@@ -16,7 +16,7 @@ const CABE_TZ = 'Asia/Jakarta';
 const CABE_APP_PIN = '1234'; // GANTI PIN DI SINI
 const CABE_TOKEN_TTL_SECONDS = 21600; // 6 jam sesi login
 const CABE_BOOTSTRAP_CACHE_SECONDS = 20; // cache ringkas agar load data awal lebih cepat
-const CABE_BOOTSTRAP_CACHE_KEY = 'CABE_BOOTSTRAP_V19';
+const CABE_BOOTSTRAP_CACHE_KEY = 'CABE_BOOTSTRAP_V21';
 const CABE_WRITE_RESULT_CACHE_SECONDS = 21600; // 6 jam: cegah transaksi dobel saat koneksi lambat
 const CABE_WRITE_RESULT_CACHE_PREFIX = 'CABE_WRITE_RESULT_';
 const CABE_DRIVE_NOTA_PENJUALAN_FOLDER_ID = '1VHAvhRR0rydciTdKyxwyFVxQCNO7NOsh';
@@ -44,6 +44,9 @@ const CABE_SHEETS = {
   NOTA_PENJUALAN: 'NOTA PENJUALAN',
   AKSES_PERANGKAT: 'AKSES PERANGKAT',
   KOREKSI_TRANSAKSI: 'KOREKSI TRANSAKSI',
+  MUTASI_MODAL: 'MUTASI MODAL',
+  REKONSILIASI_BANK: 'REKONSILIASI BANK',
+  TUTUP_PERIODE: 'TUTUP PERIODE',
   SETUP: 'SETUP'
 };
 
@@ -107,6 +110,18 @@ const CABE_HEADERS = {
     'ID Koreksi', 'Waktu Koreksi', 'Jenis', 'Tanggal Transaksi', 'ID Transaksi',
     'Kode Barang', 'Nama Barang', 'Data Lama', 'Data Baru', 'Selisih Qty',
     'Alasan', 'Aksi'
+  ],
+  'MUTASI MODAL': [
+    'ID', 'Tanggal', 'Jenis', 'Jumlah', 'Metode', 'Keterangan', 'Created At', 'Updated At'
+  ],
+  'REKONSILIASI BANK': [
+    'ID', 'Tanggal', 'Saldo Sistem', 'Saldo Bank Aktual', 'Selisih', 'Keterangan', 'Created At', 'Updated At'
+  ],
+  'TUTUP PERIODE': [
+    'ID', 'Periode', 'Tanggal Tutup', 'Saldo Sistem', 'Saldo Bank Aktual', 'Selisih',
+    'Penjualan', 'HPP', 'Laba Kotor', 'Pengeluaran Usaha', 'Laba Bersih',
+    'Pemasukan Kas', 'Uang Keluar', 'Nilai Stok Akhir', 'Piutang', 'Hutang',
+    'Tambahan Modal', 'Pengambilan Pemilik', 'Catatan', 'Status', 'Created At'
   ],
   'SETUP': ['Kunci', 'Isi / Pilihan', 'Keterangan']
 };
@@ -173,6 +188,9 @@ function setupCABE() {
     CABE_SHEETS.PENGELUARAN,
     CABE_SHEETS.AKSES_PERANGKAT,
     CABE_SHEETS.KOREKSI_TRANSAKSI,
+    CABE_SHEETS.MUTASI_MODAL,
+    CABE_SHEETS.REKONSILIASI_BANK,
+    CABE_SHEETS.TUTUP_PERIODE,
     CABE_SHEETS.SETUP
   ];
 
@@ -307,8 +325,12 @@ function setupHutangFormulas_(ss) {
 }
 
 function buildCashflowBisnis_(ss) {
+  ensureFinanceControlSheets_(ss);
   const sh = ss.getSheetByName(CABE_SHEETS.CASHFLOW) || ss.insertSheet(CABE_SHEETS.CASHFLOW);
   const savedCashflowFlags = readCashflowFlagsFromSheet_(sh);
+  const savedYear = parseNumber_(sh.getRange('B3').getValue()) || new Date().getFullYear();
+  const savedMonth = parseNumber_(sh.getRange('D3').getValue()) || (new Date().getMonth() + 1);
+  const savedOpeningBalance = parseNumber_(sh.getRange('G3').getValue());
   sh.clear();
   sh.setTabColor('#174a91');
 
@@ -326,11 +348,11 @@ function buildCashflowBisnis_(ss) {
     .setFontSize(9).setHorizontalAlignment('center');
 
   sh.getRange('A3').setValue('Tahun');
-  sh.getRange('B3').setValue(new Date().getFullYear());
+  sh.getRange('B3').setValue(savedYear);
   sh.getRange('C3').setValue('Bulan');
-  sh.getRange('D3').setValue(new Date().getMonth() + 1);
+  sh.getRange('D3').setValue(savedMonth);
   sh.getRange('E3:F3').merge().setValue('SALDO AWAL');
-  sh.getRange('G3:I3').merge().setValue(0);
+  sh.getRange('G3:I3').merge().setValue(savedOpeningBalance);
   sh.getRange('A3:I3').setBackground(dark).setFontColor(white).setFontWeight('bold')
     .setHorizontalAlignment('center');
   sh.getRange('G3:I3').setNumberFormat('"Rp"#,##0');
@@ -356,8 +378,8 @@ function buildCashflowBisnis_(ss) {
     const dayRef = r - 5;
     formulas.push([
       `=IF(ROW(A${dayRef})>DAY(EOMONTH(DATE($B$3;$D$3;1);0));"";DATE($B$3;$D$3;ROW(A${dayRef})))`,
-      `=IF($A${r}="";"";IF($H${r}=TRUE;SUMIFS('${CABE_SHEETS.BARANG_TERJUAL}'!$L:$L;'${CABE_SHEETS.BARANG_TERJUAL}'!$B:$B;$A${r});0))`,
-      `=IF($A${r}="";"";SUMIFS('${CABE_SHEETS.BARANG_MASUK}'!$H:$H;'${CABE_SHEETS.BARANG_MASUK}'!$B:$B;$A${r};'${CABE_SHEETS.BARANG_MASUK}'!$K:$K;"TUNAI")+SUMIFS('${CABE_SHEETS.BAYAR_HUTANG}'!$F:$F;'${CABE_SHEETS.BAYAR_HUTANG}'!$B:$B;$A${r})+SUMIFS('${CABE_SHEETS.PENGELUARAN}'!$D:$D;'${CABE_SHEETS.PENGELUARAN}'!$B:$B;$A${r}))`,
+      `=IF($A${r}="";"";IF($H${r}=TRUE;SUMIFS('${CABE_SHEETS.BARANG_TERJUAL}'!$L:$L;'${CABE_SHEETS.BARANG_TERJUAL}'!$B:$B;$A${r});0)+SUMIFS('${CABE_SHEETS.MUTASI_MODAL}'!$D:$D;'${CABE_SHEETS.MUTASI_MODAL}'!$B:$B;$A${r};'${CABE_SHEETS.MUTASI_MODAL}'!$C:$C;"TAMBAHAN MODAL"))`,
+      `=IF($A${r}="";"";SUMIFS('${CABE_SHEETS.BARANG_MASUK}'!$H:$H;'${CABE_SHEETS.BARANG_MASUK}'!$B:$B;$A${r};'${CABE_SHEETS.BARANG_MASUK}'!$K:$K;"TUNAI")+SUMIFS('${CABE_SHEETS.BAYAR_HUTANG}'!$F:$F;'${CABE_SHEETS.BAYAR_HUTANG}'!$B:$B;$A${r})+SUMIFS('${CABE_SHEETS.PENGELUARAN}'!$D:$D;'${CABE_SHEETS.PENGELUARAN}'!$B:$B;$A${r})+SUMIFS('${CABE_SHEETS.MUTASI_MODAL}'!$D:$D;'${CABE_SHEETS.MUTASI_MODAL}'!$B:$B;$A${r};'${CABE_SHEETS.MUTASI_MODAL}'!$C:$C;"PRIVE PEMILIK")+SUMIFS('${CABE_SHEETS.MUTASI_MODAL}'!$D:$D;'${CABE_SHEETS.MUTASI_MODAL}'!$B:$B;$A${r};'${CABE_SHEETS.MUTASI_MODAL}'!$C:$C;"PENGAMBILAN LABA"))`,
       `=IF($A${r}="";"";IF(ROW()=6;$G$3;D${r-1})+B${r}-C${r})`,
       `=IF($A${r}="";"";IF($H${r}=TRUE;SUMIFS('${CABE_SHEETS.BARANG_TERJUAL}'!$K:$K;'${CABE_SHEETS.BARANG_TERJUAL}'!$B:$B;$A${r});0))`,
       `=IF($A${r}="";"";IF($I${r}=TRUE;E${r};0))`,
@@ -375,7 +397,7 @@ function buildCashflowBisnis_(ss) {
     .setBackground(dark).setFontColor(white).setFontWeight('bold')
     .setHorizontalAlignment('center');
 
-  sh.getRange('A39:B39').merge().setValue('Pemasukan Cair');
+  sh.getRange('A39:B39').merge().setValue('Pemasukan Kas');
   sh.getRange('C39:D39').merge().setValue('Pengeluaran');
   sh.getRange('E39:F39').merge().setValue('Saldo Kas');
   sh.getRange('G39').setValue('Laba Masuk');
@@ -1266,7 +1288,9 @@ function setupSetupSheet_(ss) {
     ['Kategori Pengeluaran', 'Admin', 'Boleh ditambah.'],
     ['', 'Transport', ''],
     ['', 'Operasional', ''],
-    ['', 'Lain-lain', '']
+    ['', 'Lain-lain', ''],
+    ['MODAL_STOK_MINIMUM', 0, 'Cadangan minimum untuk belanja stok sebelum laba dipindahkan.'],
+    ['BATAS_PIUTANG_HARI', 7, 'Batas hari nota belum H.C sebelum muncul peringatan.']
   ];
   sh.getRange(CABE_START_ROW, 1, data.length, 3).setValues(data);
   sh.getRange('A:A').setFontWeight('bold');
@@ -1802,7 +1826,7 @@ function apiHandleCABE_(action, payload, authToken) {
   requireCABEAuth_(authToken);
 
   const ss = SpreadsheetApp.openById(CABE_SPREADSHEET_ID);
-  const writeActions = ['ADD_BARANG_MASUK', 'ADD_BARANG_TERJUAL', 'SAVE_KOREKSI_TRANSAKSI', 'ADD_STOK_OPNAME', 'ADD_BAYAR_HUTANG', 'ADD_PENGELUARAN', 'UPDATE_PENGELUARAN', 'DELETE_PENGELUARAN', 'UPDATE_HC', 'UPDATE_LC', 'UPDATE_NOTA_HC', 'GENERATE_NOTA_PENJUALAN', 'REGISTER_FACE_DEVICE', 'DISABLE_FACE_DEVICE'];
+  const writeActions = ['ADD_BARANG_MASUK', 'ADD_BARANG_TERJUAL', 'SAVE_KOREKSI_TRANSAKSI', 'ADD_STOK_OPNAME', 'ADD_BAYAR_HUTANG', 'ADD_PENGELUARAN', 'UPDATE_PENGELUARAN', 'DELETE_PENGELUARAN', 'UPDATE_HC', 'UPDATE_LC', 'UPDATE_NOTA_HC', 'GENERATE_NOTA_PENJUALAN', 'SAVE_BANK_RECONCILIATION', 'SAVE_FINANCE_SETTINGS', 'ADD_CAPITAL_MOVEMENT', 'CLOSE_PERIOD', 'REGISTER_FACE_DEVICE', 'DISABLE_FACE_DEVICE'];
 
   if (writeActions.indexOf(action) >= 0) {
     return withCABEWriteLock_(function() {
@@ -1828,6 +1852,8 @@ function apiRouteCABE_(ss, action, payload) {
     case 'GET_PENGELUARAN_HISTORY': return apiGetPengeluaranHistory_(ss);
     case 'GET_NOTA_HISTORY': return apiGetNotaHistory_(ss);
     case 'GET_TRANSACTION_SUMMARY': return apiGetTransactionSummary_(ss);
+    case 'GET_FINANCE_CONTROL': return apiGetFinanceControl_(ss, payload);
+    case 'GET_MONTHLY_REPORT': return apiGetMonthlyReport_(ss, payload);
     case 'GET_KOREKSI_TRANSAKSI': return apiGetKoreksiTransaksi_(ss, payload);
     case 'ADD_BARANG_MASUK': return apiAddBarangMasuk_(ss, payload);
     case 'ADD_BARANG_TERJUAL': return apiAddBarangTerjual_(ss, payload);
@@ -1841,6 +1867,10 @@ function apiRouteCABE_(ss, action, payload) {
     case 'UPDATE_LC': return apiUpdateCashflowFlag_(ss, payload, 'LC');
     case 'UPDATE_NOTA_HC': return apiUpdateNotaHC_(ss, payload);
     case 'GENERATE_NOTA_PENJUALAN': return apiGenerateNotaPenjualan_(ss, payload);
+    case 'SAVE_BANK_RECONCILIATION': return apiSaveBankReconciliation_(ss, payload);
+    case 'SAVE_FINANCE_SETTINGS': return apiSaveFinanceSettings_(ss, payload);
+    case 'ADD_CAPITAL_MOVEMENT': return apiAddCapitalMovement_(ss, payload);
+    case 'CLOSE_PERIOD': return apiClosePeriod_(ss, payload);
     case 'GET_AKSES_PERANGKAT': return apiGetAksesPerangkat_(ss);
     case 'REGISTER_FACE_DEVICE': return apiRegisterFaceDevice_(ss, payload);
     case 'DISABLE_FACE_DEVICE': return apiDisableFaceDevice_(ss, payload);
@@ -2064,6 +2094,8 @@ function apiGetBootstrap_(ss, payload) {
     pengeluaranHistory: apiGetPengeluaranHistory_(ss),
     notaHistory: apiGetNotaHistory_(ss),
     transactionSummary: apiGetTransactionSummary_(ss),
+    financeControl: apiGetFinanceControl_(ss, { _context: { cashflow: cashflow, hutang: hutang, stok: stok } }),
+    monthlyReport: apiGetMonthlyReport_(ss, { _context: { cashflow: cashflow, hutang: hutang, stok: stok } }),
     cached: false,
     serverTime: formatDateTimeApi_(new Date())
   };
@@ -2210,7 +2242,11 @@ function buildDashboardPayload_(cashflow, stokRows, hutangRows) {
     pemasukanCairBulanIni: parseNumber_(cashflow.pemasukanCair),
     pengeluaranBulanIni: parseNumber_(cashflow.pengeluaran),
     saldoKas: parseNumber_(cashflow.saldo),
-    labaMasukBulanIni: parseNumber_(cashflow.labaMasuk),
+    totalLabaPenjualan: parseNumber_(cashflow.totalLabaPenjualan),
+    labaSudahHCBulanIni: parseNumber_(cashflow.labaSudahHC),
+    labaBelumHCBulanIni: parseNumber_(cashflow.labaBelumHC),
+    // Alias lama dipertahankan; nilainya adalah laba yang sudah H.C.
+    labaMasukBulanIni: parseNumber_(cashflow.labaSudahHC),
     labaDipindahBulanIni: parseNumber_(cashflow.labaDipindah),
     sisaLabaBelumDipindah: parseNumber_(cashflow.sisaLaba),
     sisaLabaBulanIni: parseNumber_(cashflow.sisaLaba),
@@ -2446,6 +2482,7 @@ function apiGetCashflow_(ss) {
   if (!sh) throw new Error('Sheet CASHFLOW BISNIS tidak ditemukan.');
 
   const salesProfitMap = getSalesProfitMapByDate_(ss);
+  const capitalMovementMap = getCapitalMovementMapByDate_(ss);
   const saldoAwal = parseNumber_(sh.getRange('G3').getValue());
   let saldoBerjalan = saldoAwal;
 
@@ -2461,11 +2498,19 @@ function apiGetCashflow_(ss) {
       const penjualan = parseNumber_(sale.penjualan);
       const laba = parseNumber_(sale.laba);
       const pemasukan = hc ? penjualan : 0;
+      const movement = capitalMovementMap[key] || { modalMasuk: 0, prive: 0, pengambilanLaba: 0 };
+      const modalMasuk = parseNumber_(movement.modalMasuk);
+      const pengambilanPemilik = parseNumber_(movement.prive) + parseNumber_(movement.pengambilanLaba);
+      // Kolom Pengeluaran pada sheet sudah mencakup pengeluaran usaha + mutasi pemilik.
+      // Pisahkan kembali agar mutasi pemilik tidak dihitung dua kali di API.
       const pengeluaran = parseNumber_(r[2]);
-      const labaMasuk = hc ? laba : 0;
-      const labaKeluar = lc ? labaMasuk : 0;
-      const labaBersih = labaMasuk - labaKeluar;
-      saldoBerjalan += pemasukan - pengeluaran;
+      const pengeluaranUsaha = Math.max(0, pengeluaran - pengambilanPemilik);
+      const pemasukanTotal = pemasukan + modalMasuk;
+      const labaSudahHC = hc ? laba : 0;
+      const labaBelumHC = hc ? 0 : laba;
+      const labaSudahLC = hc && lc ? laba : 0;
+      const sisaLaba = labaSudahHC - labaSudahLC;
+      saldoBerjalan += pemasukanTotal - pengeluaran;
 
       return {
         id: key,
@@ -2473,12 +2518,24 @@ function apiGetCashflow_(ss) {
         tanggal: formatDateApi_(r[0]),
         penjualan: penjualan,
         pemasukan: pemasukan,
+        pemasukanTotal: pemasukanTotal,
+        modalMasuk: modalMasuk,
+        pengeluaranUsaha: pengeluaranUsaha,
+        pengambilanPemilik: pengambilanPemilik,
+        prive: parseNumber_(movement.prive),
+        pengambilanLaba: parseNumber_(movement.pengambilanLaba),
         pengeluaran: pengeluaran,
         saldo: saldoBerjalan,
         laba: laba,
-        labaMasuk: labaMasuk,
-        labaKeluar: labaKeluar,
-        labaBersih: labaBersih,
+        totalLaba: laba,
+        labaSudahHC: labaSudahHC,
+        labaBelumHC: labaBelumHC,
+        labaSudahLC: labaSudahLC,
+        sisaLaba: sisaLaba,
+        // Alias lama dipertahankan agar frontend versi sebelumnya tetap dapat membaca data.
+        labaMasuk: labaSudahHC,
+        labaKeluar: labaSudahLC,
+        labaBersih: sisaLaba,
         hc: hc,
         lc: lc
       };
@@ -2486,23 +2543,38 @@ function apiGetCashflow_(ss) {
 
   const totalPenjualan = rows.reduce(function(sum, row) { return sum + parseNumber_(row.penjualan); }, 0);
   const pemasukanCair = rows.reduce(function(sum, row) { return sum + parseNumber_(row.pemasukan); }, 0);
-  const pengeluaran = rows.reduce(function(sum, row) { return sum + parseNumber_(row.pengeluaran); }, 0);
-  const labaMasuk = rows.reduce(function(sum, row) { return sum + parseNumber_(row.labaMasuk); }, 0);
-  const labaDipindah = rows.reduce(function(sum, row) { return sum + parseNumber_(row.labaKeluar); }, 0);
-  const sisaLaba = rows.reduce(function(sum, row) { return sum + parseNumber_(row.labaBersih); }, 0);
+  const modalMasuk = rows.reduce(function(sum, row) { return sum + parseNumber_(row.modalMasuk); }, 0);
+  const pemasukanTotal = pemasukanCair + modalMasuk;
+  const pengeluaranUsaha = rows.reduce(function(sum, row) { return sum + parseNumber_(row.pengeluaranUsaha); }, 0);
+  const pengambilanPemilik = rows.reduce(function(sum, row) { return sum + parseNumber_(row.pengambilanPemilik); }, 0);
+  const pengeluaran = pengeluaranUsaha + pengambilanPemilik;
+  const totalLabaPenjualan = rows.reduce(function(sum, row) { return sum + parseNumber_(row.totalLaba); }, 0);
+  const labaSudahHC = rows.reduce(function(sum, row) { return sum + parseNumber_(row.labaSudahHC); }, 0);
+  const labaBelumHC = rows.reduce(function(sum, row) { return sum + parseNumber_(row.labaBelumHC); }, 0);
+  const labaDipindah = rows.reduce(function(sum, row) { return sum + parseNumber_(row.labaSudahLC); }, 0);
+  const sisaLaba = rows.reduce(function(sum, row) { return sum + parseNumber_(row.sisaLaba); }, 0);
   const tagihanBelumHC = rows.reduce(function(sum, row) {
     return sum + (row.hc ? 0 : parseNumber_(row.penjualan));
   }, 0);
-  const saldo = saldoAwal + pemasukanCair - pengeluaran;
+  const saldo = saldoAwal + pemasukanTotal - pengeluaran;
 
   return {
     penjualan: totalPenjualan,
     pemasukan: pemasukanCair,
     pemasukanCair: pemasukanCair,
+    modalMasuk: modalMasuk,
+    pemasukanTotal: pemasukanTotal,
+    pengeluaranUsaha: pengeluaranUsaha,
+    pengambilanPemilik: pengambilanPemilik,
     pengeluaran: pengeluaran,
     saldoAwal: saldoAwal,
     saldo: saldo,
-    labaMasuk: labaMasuk,
+    totalLabaPenjualan: totalLabaPenjualan,
+    labaTotal: totalLabaPenjualan,
+    labaSudahHC: labaSudahHC,
+    labaBelumHC: labaBelumHC,
+    // Alias lama: labaMasuk sekarang berarti laba yang sudah H.C.
+    labaMasuk: labaSudahHC,
     labaDipindah: labaDipindah,
     sisaLaba: sisaLaba,
     tagihanBelumHC: tagihanBelumHC,
@@ -2603,6 +2675,7 @@ function apiUpdateNotaHC_(ss, payload) {
 
   if (!notaRow) throw new Error('Nomor nota tidak ditemukan: ' + noNota);
   if (!startDate || !endDate) throw new Error('Periode nota tidak valid.');
+  assertFinanceDateOpen_(ss, endDate, 'Perubahan H.C nota');
 
   const checked = parseBooleanApi_(payload.checked);
   const cashflowSh = ss.getSheetByName(CABE_SHEETS.CASHFLOW);
@@ -2645,6 +2718,474 @@ function apiUpdateNotaHC_(ss, payload) {
     tanggalAwal: formatDateApi_(startDate),
     tanggalAkhir: formatDateApi_(endDate)
   };
+}
+
+
+
+/***********************
+ * KONTROL KEUANGAN V21
+ ***********************/
+function ensureFinanceControlSheets_(ss) {
+  [CABE_SHEETS.MUTASI_MODAL, CABE_SHEETS.REKONSILIASI_BANK, CABE_SHEETS.TUTUP_PERIODE].forEach(function(name) {
+    if (!ss.getSheetByName(name)) prepareSheet_(ss, name, false);
+  });
+}
+
+function getSetupValue_(ss, key, fallback) {
+  const sh = ss.getSheetByName(CABE_SHEETS.SETUP);
+  if (!sh || sh.getLastRow() < CABE_START_ROW) return fallback;
+  const values = sh.getRange(CABE_START_ROW, 1, sh.getLastRow() - CABE_START_ROW + 1, 2).getValues();
+  const target = normalize_(key);
+  for (let i = 0; i < values.length; i++) {
+    if (normalize_(values[i][0]) === target) return values[i][1] === '' ? fallback : values[i][1];
+  }
+  return fallback;
+}
+
+function setSetupValue_(ss, key, value, note) {
+  const sh = ss.getSheetByName(CABE_SHEETS.SETUP) || prepareSheet_(ss, CABE_SHEETS.SETUP, false);
+  const last = sh.getLastRow();
+  let row = 0;
+  if (last >= CABE_START_ROW) {
+    const keys = sh.getRange(CABE_START_ROW, 1, last - CABE_START_ROW + 1, 1).getDisplayValues();
+    for (let i = 0; i < keys.length; i++) {
+      if (normalize_(keys[i][0]) === normalize_(key)) { row = CABE_START_ROW + i; break; }
+    }
+  }
+  if (!row) row = getNextEmptyRow_(sh, CABE_START_ROW, 1);
+  sh.getRange(row, 1, 1, 3).setValues([[key, value, note || 'Pengaturan dari Web/PWA']]);
+}
+
+function getActiveCashflowPeriod_(ss) {
+  const sh = ss.getSheetByName(CABE_SHEETS.CASHFLOW);
+  const now = new Date();
+  const year = sh ? (parseNumber_(sh.getRange('B3').getValue()) || now.getFullYear()) : now.getFullYear();
+  const month = sh ? (parseNumber_(sh.getRange('D3').getValue()) || (now.getMonth() + 1)) : (now.getMonth() + 1);
+  const period = String(year) + '-' + String(month).padStart(2, '0');
+  return { year: year, month: month, period: period, label: formatPeriodLabel_(period) };
+}
+
+function parsePeriod_(value) {
+  const text = String(value || '').trim();
+  const match = text.match(/^(\d{4})-(\d{1,2})$/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (year < 2000 || month < 1 || month > 12) return null;
+  return {
+    year: year,
+    month: month,
+    period: String(year) + '-' + String(month).padStart(2, '0'),
+    start: new Date(year, month - 1, 1),
+    end: new Date(year, month, 0, 23, 59, 59, 999)
+  };
+}
+
+function formatPeriodLabel_(period) {
+  const parsed = parsePeriod_(period);
+  if (!parsed) return String(period || '');
+  return Utilities.formatDate(parsed.start, CABE_TZ, 'MMMM yyyy');
+}
+
+function dateInPeriod_(value, parsedPeriod) {
+  const date = parseDateInput_(value);
+  if (!date || !parsedPeriod) return false;
+  return date >= parsedPeriod.start && date <= parsedPeriod.end;
+}
+
+function getCapitalMovementMapByDate_(ss) {
+  ensureFinanceControlSheets_(ss);
+  const sh = ss.getSheetByName(CABE_SHEETS.MUTASI_MODAL);
+  const map = {};
+  if (!sh || sh.getLastRow() < CABE_START_ROW) return map;
+  const values = sh.getRange(CABE_START_ROW, 1, sh.getLastRow() - CABE_START_ROW + 1, 8).getValues();
+  values.forEach(function(row) {
+    const key = formatCashflowKey_(row[1]);
+    if (!key) return;
+    if (!map[key]) map[key] = { modalMasuk: 0, prive: 0, pengambilanLaba: 0 };
+    const type = normalize_(row[2]);
+    const amount = parseNumber_(row[3]);
+    if (type === 'tambahan modal') map[key].modalMasuk += amount;
+    if (type === 'prive pemilik') map[key].prive += amount;
+    if (type === 'pengambilan laba') map[key].pengambilanLaba += amount;
+  });
+  return map;
+}
+
+function getCapitalMovementHistory_(ss, limit) {
+  ensureFinanceControlSheets_(ss);
+  const sh = ss.getSheetByName(CABE_SHEETS.MUTASI_MODAL);
+  if (!sh || sh.getLastRow() < CABE_START_ROW) return [];
+  const values = sh.getRange(CABE_START_ROW, 1, sh.getLastRow() - CABE_START_ROW + 1, 8).getValues();
+  return values.filter(function(row) { return row[0] && row[1] && row[2] && parseNumber_(row[3]) > 0; })
+    .map(function(row) {
+      const date = parseDateInput_(row[1]);
+      return { id:String(row[0]), tanggal:formatDateApi_(date), tanggalIso:date ? Utilities.formatDate(date,CABE_TZ,'yyyy-MM-dd') : '', tanggalRaw:date, jenis:String(row[2]), jumlah:parseNumber_(row[3]), metode:String(row[4] || ''), keterangan:String(row[5] || '') };
+    })
+    .sort(function(a,b){ return (b.tanggalRaw ? b.tanggalRaw.getTime() : 0) - (a.tanggalRaw ? a.tanggalRaw.getTime() : 0); })
+    .slice(0, limit || 100)
+    .map(function(item){ delete item.tanggalRaw; return item; });
+}
+
+function getReconciliationHistory_(ss, limit) {
+  ensureFinanceControlSheets_(ss);
+  const sh = ss.getSheetByName(CABE_SHEETS.REKONSILIASI_BANK);
+  if (!sh || sh.getLastRow() < CABE_START_ROW) return [];
+  const values = sh.getRange(CABE_START_ROW, 1, sh.getLastRow() - CABE_START_ROW + 1, 8).getValues();
+  return values.filter(function(row){ return row[0] && row[1]; })
+    .map(function(row){
+      const date = parseDateInput_(row[1]);
+      const createdAt = row[6] instanceof Date ? row[6] : date;
+      return { id:String(row[0]), tanggal:formatDateApi_(date), tanggalIso:date ? Utilities.formatDate(date,CABE_TZ,'yyyy-MM-dd'):'', tanggalRaw:date, createdRaw:createdAt, saldoSystem:parseNumber_(row[2]), saldoBankAktual:parseNumber_(row[3]), selisih:parseNumber_(row[4]), keterangan:String(row[5]||'') };
+    })
+    .sort(function(a,b){ return (b.createdRaw ? b.createdRaw.getTime() : 0) - (a.createdRaw ? a.createdRaw.getTime() : 0); })
+    .slice(0, limit || 100)
+    .map(function(item){ delete item.tanggalRaw; delete item.createdRaw; return item; });
+}
+
+function getCloseHistory_(ss, limit) {
+  ensureFinanceControlSheets_(ss);
+  const sh = ss.getSheetByName(CABE_SHEETS.TUTUP_PERIODE);
+  if (!sh || sh.getLastRow() < CABE_START_ROW) return [];
+  const width = CABE_HEADERS[CABE_SHEETS.TUTUP_PERIODE].length;
+  const values = sh.getRange(CABE_START_ROW, 1, sh.getLastRow() - CABE_START_ROW + 1, width).getValues();
+  return values.filter(function(row){ return row[0] && row[1]; })
+    .map(function(row){ return {
+      id:String(row[0]), period:String(row[1]), label:formatPeriodLabel_(row[1]), tanggalTutup:formatDateTimeApi_(row[2]),
+      saldoSystem:parseNumber_(row[3]), saldoBankAktual:parseNumber_(row[4]), selisih:parseNumber_(row[5]), status:String(row[19] || 'DITUTUP')
+    }; })
+    .sort(function(a,b){ return String(b.period).localeCompare(String(a.period)); })
+    .slice(0, limit || 100);
+}
+
+function getClosedPeriodRecord_(ss, period) {
+  ensureFinanceControlSheets_(ss);
+  const sh = ss.getSheetByName(CABE_SHEETS.TUTUP_PERIODE);
+  if (!sh || sh.getLastRow() < CABE_START_ROW) return null;
+  const width = CABE_HEADERS[CABE_SHEETS.TUTUP_PERIODE].length;
+  const values = sh.getRange(CABE_START_ROW, 1, sh.getLastRow() - CABE_START_ROW + 1, width).getValues();
+  for (let i = values.length - 1; i >= 0; i--) {
+    if (String(values[i][1] || '') === period && normalize_(values[i][19]) === 'ditutup') return { row:CABE_START_ROW+i, values:values[i] };
+  }
+  return null;
+}
+
+function getLatestClosedEndDate_(ss) {
+  const history = getCloseHistory_(ss, 500).filter(function(item){ return normalize_(item.status) === 'ditutup'; });
+  let latest = null;
+  history.forEach(function(item){
+    const parsed = parsePeriod_(item.period);
+    if (parsed && (!latest || parsed.end > latest)) latest = parsed.end;
+  });
+  return latest;
+}
+
+function assertFinanceDateOpen_(ss, value, actionLabel) {
+  const date = parseDateInput_(value);
+  if (!date) return;
+  const closedEnd = getLatestClosedEndDate_(ss);
+  if (!closedEnd) return;
+  const check = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const end = new Date(closedEnd.getFullYear(), closedEnd.getMonth(), closedEnd.getDate()).getTime();
+  if (check <= end) throw new Error((actionLabel || 'Transaksi') + ' ditolak karena periode sampai ' + formatDateApi_(closedEnd) + ' sudah ditutup.');
+}
+
+function getPriorityDebt_(hutangRows) {
+  const today = todayDate_();
+  const horizon = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7, 23, 59, 59, 999);
+  return (hutangRows || []).reduce(function(sum, item){
+    const remaining = parseNumber_(item.sisaHutang);
+    if (remaining <= 0) return sum;
+    const due = parseDateInput_(item.jatuhTempo);
+    if (!due || due <= horizon || normalize_(item.status) === 'jatuh tempo') return sum + remaining;
+    return sum;
+  }, 0);
+}
+
+function apiGetFinanceControl_(ss, payload) {
+  ensureFinanceControlSheets_(ss);
+  payload = payload || {};
+  const context = payload._context || {};
+  const active = getActiveCashflowPeriod_(ss);
+  const cashflow = context.cashflow || apiGetCashflow_(ss);
+  const hutang = context.hutang || apiGetHutang_(ss);
+  const stok = context.stok || apiGetStokBarang_(ss);
+  const reconciliations = getReconciliationHistory_(ss, 30);
+  const currentReconciliation = reconciliations.find(function(item){ return String(item.tanggalIso || '').slice(0,7) === active.period; }) || null;
+  const modalMinimum = parseNumber_(getSetupValue_(ss, 'MODAL_STOK_MINIMUM', 0));
+  const batasPiutangHari = Math.max(1, parseNumber_(getSetupValue_(ss, 'BATAS_PIUTANG_HARI', 7)) || 7);
+  const hutangPrioritas = getPriorityDebt_(hutang);
+  const saldoBankAktual = currentReconciliation ? parseNumber_(currentReconciliation.saldoBankAktual) : null;
+  const saldoSystem = parseNumber_(cashflow.saldo);
+  const todayIso = Utilities.formatDate(todayDate_(), CABE_TZ, 'yyyy-MM-dd');
+  const rekonsiliasiFresh = Boolean(currentReconciliation && currentReconciliation.tanggalIso === todayIso);
+  const saldoAcuan = rekonsiliasiFresh ? saldoBankAktual : saldoSystem;
+  const sisaLaba = parseNumber_(cashflow.sisaLaba);
+  // Demi keamanan, laba aman baru tersedia setelah saldo bank diperiksa pada hari yang sama.
+  const labaAman = rekonsiliasiFresh ? Math.max(0, Math.min(sisaLaba, saldoAcuan - hutangPrioritas - modalMinimum)) : 0;
+  const summary = {
+    saldoSystem: saldoSystem,
+    saldoBankAktual: saldoBankAktual,
+    tanggalRekonsiliasi: currentReconciliation ? currentReconciliation.tanggal : '',
+    tanggalRekonsiliasiIso: currentReconciliation ? currentReconciliation.tanggalIso : '',
+    rekonsiliasiFresh: rekonsiliasiFresh,
+    selisih: currentReconciliation ? parseNumber_(currentReconciliation.selisih) : 0,
+    sisaLaba: sisaLaba,
+    labaAmanDipindahkan: labaAman,
+    hutangPrioritas: hutangPrioritas,
+    modalMinimum: modalMinimum,
+    batasPiutangHari: batasPiutangHari,
+    saldoAcuanSource: rekonsiliasiFresh ? 'Saldo bank aktual hari ini' : (saldoBankAktual === null ? 'Rekonsiliasi saldo bank diperlukan' : 'Saldo bank perlu diperbarui hari ini')
+  };
+  return {
+    activePeriod: active.period,
+    activePeriodLabel: active.label,
+    summary: summary,
+    reconciliationHistory: reconciliations,
+    capitalHistory: getCapitalMovementHistory_(ss, 100),
+    closeHistory: getCloseHistory_(ss, 100),
+    anomalies: getFinanceAnomalies_(ss, { active:active, cashflow:cashflow, hutang:hutang, stok:stok, summary:summary })
+  };
+}
+
+function apiSaveBankReconciliation_(ss, payload) {
+  ensureFinanceControlSheets_(ss);
+  const tanggal = parseDateInput_(payload.tanggal) || todayDate_();
+  if (tanggal > todayDate_()) throw new Error('Tanggal rekonsiliasi tidak boleh melebihi hari ini.');
+  assertFinanceDateOpen_(ss, tanggal, 'Rekonsiliasi bank');
+  const saldoBankRaw = payload.saldoBankAktual !== undefined ? payload.saldoBankAktual : (payload.saldoBank !== undefined ? payload.saldoBank : payload.balance);
+  if (saldoBankRaw === undefined || saldoBankRaw === null || String(saldoBankRaw).trim() === '') throw new Error('Saldo bank aktual wajib diisi.');
+  const saldoBank = parseNumber_(saldoBankRaw);
+  if (saldoBank < 0) throw new Error('Saldo bank aktual tidak boleh kurang dari 0.');
+  const cashflow = apiGetCashflow_(ss);
+  const saldoSystem = parseNumber_(cashflow.saldo);
+  const selisih = saldoBank - saldoSystem;
+  const sh = ss.getSheetByName(CABE_SHEETS.REKONSILIASI_BANK);
+  const row = getNextEmptyRow_(sh, CABE_START_ROW, 1);
+  const now = new Date();
+  const id = 'RB-' + Utilities.formatDate(now, CABE_TZ, 'yyyyMMdd-HHmmss') + '-' + Utilities.getUuid().substring(0,6).toUpperCase();
+  sh.getRange(row,1,1,8).setValues([[id,tanggal,saldoSystem,saldoBank,selisih,String(payload.keterangan||''),now,now]]);
+  sh.getRange(row,2).setNumberFormat('dd/mm/yyyy');
+  sh.getRange(row,3,1,3).setNumberFormat('"Rp"#,##0');
+  quickAfterWrite_(ss);
+  return { message:Math.abs(selisih)<1 ? 'Saldo bank cocok dengan sistem.' : 'Rekonsiliasi tersimpan. Ada selisih ' + formatRupiah_(selisih) + '.', saldoSystem:saldoSystem, saldoBankAktual:saldoBank, selisih:selisih };
+}
+
+function apiSaveFinanceSettings_(ss, payload) {
+  const modalMinimum = parseNumber_(payload.modalMinimum || payload.modalStokMinimum);
+  const batasPiutangHari = Math.round(parseNumber_(payload.batasPiutangHari || payload.receivableDays));
+  if (modalMinimum < 0) throw new Error('Modal stok minimum tidak boleh kurang dari 0.');
+  if (batasPiutangHari < 1 || batasPiutangHari > 365) throw new Error('Batas nota belum bayar harus 1 sampai 365 hari.');
+  setSetupValue_(ss, 'MODAL_STOK_MINIMUM', modalMinimum, 'Cadangan belanja untuk laba aman dipindahkan');
+  setSetupValue_(ss, 'BATAS_PIUTANG_HARI', batasPiutangHari, 'Batas hari nota belum H.C');
+  quickAfterWrite_(ss);
+  return { message:'Pengaturan keuangan tersimpan.', modalMinimum:modalMinimum, batasPiutangHari:batasPiutangHari };
+}
+
+function apiAddCapitalMovement_(ss, payload) {
+  ensureFinanceControlSheets_(ss);
+  const tanggal = parseDateInput_(payload.tanggal) || todayDate_();
+  assertFinanceDateOpen_(ss, tanggal, 'Mutasi modal/pemilik');
+  const jenis = String(payload.jenis || '').trim().toUpperCase();
+  const allowed = ['TAMBAHAN MODAL','PRIVE PEMILIK','PENGAMBILAN LABA'];
+  if (allowed.indexOf(jenis) < 0) throw new Error('Jenis mutasi tidak valid.');
+  const jumlah = parseNumber_(payload.jumlah);
+  if (jumlah <= 0) throw new Error('Jumlah mutasi wajib lebih dari 0.');
+  if (jenis === 'PENGAMBILAN LABA') {
+    const finance = apiGetFinanceControl_(ss, {});
+    const safeProfit = parseNumber_(finance.summary && finance.summary.labaAmanDipindahkan);
+    if (jumlah > safeProfit + 0.001) throw new Error('Pengambilan laba melebihi laba aman. Maksimal saat ini ' + formatRupiah_(safeProfit) + '. Gunakan Prive Pemilik jika tetap ingin menarik dana di luar laba aman.');
+  }
+  const metode = String(payload.metode || payload.metodeBayar || 'TRANSFER').trim().toUpperCase();
+  const sh = ss.getSheetByName(CABE_SHEETS.MUTASI_MODAL);
+  const row = getNextEmptyRow_(sh, CABE_START_ROW, 1);
+  const now = new Date();
+  const id = 'MM-' + Utilities.formatDate(now,CABE_TZ,'yyyyMMdd-HHmmss') + '-' + Utilities.getUuid().substring(0,6).toUpperCase();
+  sh.getRange(row,1,1,8).setValues([[id,tanggal,jenis,jumlah,metode,String(payload.keterangan||''),now,now]]);
+  sh.getRange(row,2).setNumberFormat('dd/mm/yyyy');
+  sh.getRange(row,4).setNumberFormat('"Rp"#,##0');
+  buildCashflowBisnis_(ss);
+  buildDashboard_(ss);
+  quickAfterWrite_(ss);
+  return { message:'Mutasi tersimpan: ' + jenis + ' ' + formatRupiah_(jumlah), id:id };
+}
+
+function sumSheetByPeriod_(ss, sheetName, dateColIndex, amountCols, period) {
+  const sh = ss.getSheetByName(sheetName);
+  const result = {};
+  amountCols.forEach(function(col){ result[col.key] = 0; });
+  if (!sh || sh.getLastRow() < CABE_START_ROW) return result;
+  const width = Math.max.apply(null, [dateColIndex].concat(amountCols.map(function(c){return c.index;})));
+  const rows = sh.getRange(CABE_START_ROW,1,sh.getLastRow()-CABE_START_ROW+1,width).getValues();
+  rows.forEach(function(row){
+    if (!dateInPeriod_(row[dateColIndex-1], period)) return;
+    amountCols.forEach(function(col){ result[col.key] += parseNumber_(row[col.index-1]); });
+  });
+  return result;
+}
+
+function apiGetMonthlyReport_(ss, payload) {
+  ensureFinanceControlSheets_(ss);
+  payload = payload || {};
+  const context = payload._context || {};
+  const active = getActiveCashflowPeriod_(ss);
+  const period = parsePeriod_((payload && (payload.period || payload.periode)) || active.period);
+  if (!period) throw new Error('Periode laporan tidak valid.');
+  const closed = getClosedPeriodRecord_(ss, period.period);
+  if (closed) {
+    const r = closed.values;
+    return {
+      period:period.period, label:formatPeriodLabel_(period.period), source:'Snapshot periode tertutup',
+      penjualan:parseNumber_(r[6]), hpp:parseNumber_(r[7]), labaKotor:parseNumber_(r[8]), pengeluaranUsaha:parseNumber_(r[9]), labaBersih:parseNumber_(r[10]),
+      pemasukanKas:parseNumber_(r[11]), uangKeluar:parseNumber_(r[12]), saldo:parseNumber_(r[4]), nilaiStokAkhir:parseNumber_(r[13]), piutang:parseNumber_(r[14]), hutang:parseNumber_(r[15]),
+      tambahanModal:parseNumber_(r[16]), pengambilanPemilik:parseNumber_(r[17]), mutasiPemilikBersih:parseNumber_(r[16])-parseNumber_(r[17]),
+      note:'Snapshot permanen disimpan saat periode ditutup pada ' + formatDateTimeApi_(r[2]) + '.'
+    };
+  }
+
+  const sales = sumSheetByPeriod_(ss, CABE_SHEETS.BARANG_TERJUAL, 2, [
+    {key:'penjualan',index:12},{key:'hpp',index:10},{key:'laba',index:11}
+  ], period);
+  const expense = sumSheetByPeriod_(ss, CABE_SHEETS.PENGELUARAN, 2, [{key:'jumlah',index:4}], period);
+  let tambahanModal = 0;
+  let pengambilanPemilik = 0;
+  const movementRows = getCapitalMovementHistory_(ss, 10000);
+  movementRows.forEach(function(item){
+    if (!dateInPeriod_(item.tanggalIso || item.tanggal, period)) return;
+    if (normalize_(item.jenis) === 'tambahan modal') tambahanModal += parseNumber_(item.jumlah);
+    else pengambilanPemilik += parseNumber_(item.jumlah);
+  });
+
+  const isActive = period.period === active.period;
+  const cashflow = isActive ? (context.cashflow || apiGetCashflow_(ss)) : null;
+  const stok = isActive ? (context.stok || apiGetStokBarang_(ss)) : [];
+  const hutang = isActive ? (context.hutang || apiGetHutang_(ss)) : [];
+  const reconciliations = getReconciliationHistory_(ss, 1000);
+  const rec = reconciliations.find(function(item){ return String(item.tanggalIso||'').slice(0,7) === period.period; });
+  const stockValue = stok.reduce(function(sum,item){ return sum + parseNumber_(item.nilaiStok); },0);
+  const debtValue = hutang.reduce(function(sum,item){ return sum + parseNumber_(item.sisaHutang); },0);
+  const saldo = rec ? parseNumber_(rec.saldoBankAktual) : (cashflow ? parseNumber_(cashflow.saldo) : 0);
+  return {
+    period:period.period, label:formatPeriodLabel_(period.period), source:isActive ? (rec ? 'Periode aktif · saldo bank aktual' : 'Periode aktif · saldo sistem') : 'Transaksi historis (kas/H.C belum ditutup)',
+    penjualan:parseNumber_(sales.penjualan), hpp:parseNumber_(sales.hpp), labaKotor:parseNumber_(sales.laba),
+    pengeluaranUsaha:parseNumber_(expense.jumlah), labaBersih:parseNumber_(sales.laba)-parseNumber_(expense.jumlah),
+    pemasukanKas:cashflow ? parseNumber_(cashflow.pemasukanTotal) : 0,
+    uangKeluar:cashflow ? parseNumber_(cashflow.pengeluaran) : 0,
+    saldo:saldo, nilaiStokAkhir:stockValue,
+    piutang:cashflow ? parseNumber_(cashflow.tagihanBelumHC) : 0,
+    hutang:debtValue, tambahanModal:tambahanModal, pengambilanPemilik:pengambilanPemilik,
+    mutasiPemilikBersih:tambahanModal-pengambilanPemilik,
+    note:isActive ? 'Data aktif akan menjadi snapshot permanen setelah Tutup Periode.' : 'Untuk kas, piutang, stok akhir, dan hutang historis yang pasti, gunakan snapshot Tutup Periode.'
+  };
+}
+
+function apiClosePeriod_(ss, payload) {
+  ensureFinanceControlSheets_(ss);
+  if (!parseBooleanApi_(payload.confirmed)) throw new Error('Konfirmasi penutupan periode wajib dicentang.');
+  const active = getActiveCashflowPeriod_(ss);
+  const period = parsePeriod_(payload.periode || payload.period || active.period);
+  if (!period) throw new Error('Periode tidak valid.');
+  if (period.period !== active.period) throw new Error('Hanya periode aktif ' + active.label + ' yang dapat ditutup.');
+  if (getClosedPeriodRecord_(ss, period.period)) throw new Error('Periode ' + formatPeriodLabel_(period.period) + ' sudah ditutup.');
+  const saldoBankRaw = payload.saldoBankAktual !== undefined ? payload.saldoBankAktual : payload.saldoBank;
+  if (saldoBankRaw === undefined || saldoBankRaw === null || String(saldoBankRaw).trim() === '') throw new Error('Saldo bank akhir wajib diisi.');
+  const saldoBank = parseNumber_(saldoBankRaw);
+  if (saldoBank < 0) throw new Error('Saldo bank akhir tidak boleh kurang dari 0.');
+  const report = apiGetMonthlyReport_(ss, {period:period.period});
+  const cashflow = apiGetCashflow_(ss);
+  const saldoSystem = parseNumber_(cashflow.saldo);
+  const selisih = saldoBank - saldoSystem;
+  const sh = ss.getSheetByName(CABE_SHEETS.TUTUP_PERIODE);
+  const row = getNextEmptyRow_(sh,CABE_START_ROW,1);
+  const now = new Date();
+  const id = 'TP-' + period.period.replace('-','') + '-' + Utilities.formatDate(now,CABE_TZ,'HHmmss');
+  sh.getRange(row,1,1,21).setValues([[
+    id,period.period,now,saldoSystem,saldoBank,selisih,report.penjualan,report.hpp,report.labaKotor,report.pengeluaranUsaha,report.labaBersih,
+    report.pemasukanKas,report.uangKeluar,report.nilaiStokAkhir,report.piutang,report.hutang,report.tambahanModal,report.pengambilanPemilik,
+    String(payload.catatan||''),'DITUTUP',now
+  ]]);
+  sh.getRange(row,3).setNumberFormat('dd/mm/yyyy hh:mm');
+  sh.getRange(row,4,1,15).setNumberFormat('"Rp"#,##0');
+
+  // Simpan rekonsiliasi penutupan juga agar jejak saldo bank lengkap.
+  const recSh = ss.getSheetByName(CABE_SHEETS.REKONSILIASI_BANK);
+  const recRow = getNextEmptyRow_(recSh,CABE_START_ROW,1);
+  const recId = 'RB-CLOSE-' + Utilities.formatDate(now,CABE_TZ,'yyyyMMdd-HHmmss');
+  recSh.getRange(recRow,1,1,8).setValues([[recId,period.end,saldoSystem,saldoBank,selisih,'Rekonsiliasi otomatis saat tutup periode',now,now]]);
+  recSh.getRange(recRow,2).setNumberFormat('dd/mm/yyyy');
+  recSh.getRange(recRow,3,1,3).setNumberFormat('"Rp"#,##0');
+
+  // Buka bulan berikutnya dengan saldo bank aktual sebagai saldo awal.
+  const next = new Date(period.year, period.month, 1);
+  const cashSh = ss.getSheetByName(CABE_SHEETS.CASHFLOW);
+  cashSh.getRange('B3').setValue(next.getFullYear());
+  cashSh.getRange('D3').setValue(next.getMonth()+1);
+  cashSh.getRange('G3').setValue(saldoBank);
+  cashSh.getRange('H6:I36').setValues(Array.from({length:31},function(){return [false,false];}));
+  SpreadsheetApp.flush();
+  buildDashboard_(ss);
+  clearCABEBootstrapCache_();
+  return { message:'Periode ' + formatPeriodLabel_(period.period) + ' ditutup. Periode baru ' + Utilities.formatDate(next,CABE_TZ,'MMMM yyyy') + ' sudah dibuka.', period:period.period, nextPeriod:Utilities.formatDate(next,CABE_TZ,'yyyy-MM'), saldoAwalBaru:saldoBank };
+}
+
+function getFinanceAnomalies_(ss, context) {
+  context = context || {};
+  const anomalies = [];
+  const stok = context.stok || apiGetStokBarang_(ss);
+  const hutang = context.hutang || apiGetHutang_(ss);
+  const summary = context.summary || {};
+  const active = context.active || getActiveCashflowPeriod_(ss);
+  const batasPiutangHari = parseNumber_(summary.batasPiutangHari || 7);
+  const today = todayDate_();
+
+  stok.forEach(function(item){
+    if (parseNumber_(item.stok) < 0) anomalies.push({level:'critical',code:'NEGATIVE_STOCK',title:'Stok negatif: ' + item.nama,message:'Stok tercatat ' + formatQty_(item.stok) + ' ' + (item.satuan||'Kg') + '. Periksa penjualan atau koreksi transaksi.'});
+    else if (String(item.status||'').toUpperCase() !== 'AMAN') anomalies.push({level:'warning',code:'LOW_STOCK',title:'Stok perlu dicek: ' + item.nama,message:'Stok ' + formatQty_(item.stok) + ' ' + (item.satuan||'Kg') + ', minimum ' + formatQty_(item.minimum) + '.'});
+  });
+
+  hutang.forEach(function(item){
+    if (parseNumber_(item.totalBayar) > parseNumber_(item.totalHutang) + 0.001 || parseNumber_(item.sisaHutang) < -0.001) anomalies.push({level:'critical',code:'OVERPAID_DEBT',title:'Pembayaran hutang berlebih',message:'Nota ' + item.noNota + ' memiliki pembayaran melebihi total hutang.'});
+    const due = parseDateInput_(item.jatuhTempo);
+    if (parseNumber_(item.sisaHutang) > 0 && due && due < today) anomalies.push({level:'critical',code:'OVERDUE_DEBT',title:'Hutang jatuh tempo',message:'Nota ' + item.noNota + ' · ' + item.supplier + ' masih tersisa ' + formatRupiah_(item.sisaHutang) + '.'});
+  });
+
+  if (summary.saldoBankAktual === null || summary.saldoBankAktual === undefined) anomalies.push({level:'info',code:'NO_RECONCILIATION',title:'Saldo bank belum direkonsiliasi',message:'Masukkan saldo rekening aktual untuk periode ' + active.label + '.'});
+  else if (!summary.rekonsiliasiFresh) anomalies.push({level:'warning',code:'STALE_RECONCILIATION',title:'Saldo bank perlu diperbarui hari ini',message:'Pemeriksaan terakhir ' + (summary.tanggalRekonsiliasi || '-') + '. Laba aman ditahan Rp0 sampai saldo bank dicek ulang.'});
+  else if (Math.abs(parseNumber_(summary.selisih)) >= 1) anomalies.push({level:'critical',code:'BALANCE_MISMATCH',title:'Saldo bank berbeda dengan sistem',message:'Selisih saat ini ' + formatRupiah_(summary.selisih) + '. Cari transaksi yang belum tercatat.'});
+
+  const movementRows = getCapitalMovementHistory_(ss, 10000);
+  const actualProfitWithdrawal = movementRows.reduce(function(sum, item) {
+    if (normalize_(item.jenis) !== 'pengambilan laba' || !dateInPeriod_(item.tanggalIso || item.tanggal, parsePeriod_(active.period))) return sum;
+    return sum + parseNumber_(item.jumlah);
+  }, 0);
+  const markedProfitMoved = parseNumber_((context.cashflow || {}).labaDipindah);
+  if (Math.abs(actualProfitWithdrawal - markedProfitMoved) >= 1) {
+    const message = actualProfitWithdrawal > markedProfitMoved
+      ? 'Pengambilan laba di bank ' + formatRupiah_(actualProfitWithdrawal) + ', tetapi laba bertanda L.C baru ' + formatRupiah_(markedProfitMoved) + '.'
+      : 'Laba bertanda L.C ' + formatRupiah_(markedProfitMoved) + ', tetapi mutasi Pengambilan Laba baru ' + formatRupiah_(actualProfitWithdrawal) + '.';
+    anomalies.push({level:'warning',code:'PROFIT_TRANSFER_MISMATCH',title:'Status L.C dan pengambilan laba belum cocok',message:message});
+  }
+
+  const nota = apiGetNotaHistory_(ss);
+  nota.forEach(function(item){
+    if (item.hc) return;
+    const end = parseDateInput_(item.tanggalAkhir);
+    if (!end) return;
+    const age = Math.floor((today.getTime() - end.getTime()) / 86400000);
+    if (age > batasPiutangHari) anomalies.push({level:'warning',code:'RECEIVABLE_AGE',title:'Nota belum H.C lebih dari ' + batasPiutangHari + ' hari',message:item.noNota + ' · periode ' + item.tanggalLabel + ' · umur ' + age + ' hari.'});
+  });
+
+  const salesSh = ss.getSheetByName(CABE_SHEETS.BARANG_TERJUAL);
+  if (salesSh && salesSh.getLastRow() >= CABE_START_ROW) {
+    const rows = salesSh.getRange(CABE_START_ROW,1,salesSh.getLastRow()-CABE_START_ROW+1,17).getValues();
+    rows.forEach(function(row){
+      if (!row[0]) return;
+      const hpp = parseNumber_(row[6]);
+      const sell = parseNumber_(row[8]);
+      if (sell + 0.001 < hpp) anomalies.push({level:'critical',code:'SELL_BELOW_HPP',title:'Harga jual di bawah HPP',message:formatDateApi_(row[1]) + ' · ' + row[3] + ' dijual ' + formatRupiah_(sell) + '/Kg, HPP ' + formatRupiah_(hpp) + '/Kg.'});
+    });
+  }
+  return anomalies.slice(0,80);
 }
 
 function apiGetTransactionSummary_(ss) {
@@ -2903,6 +3444,7 @@ function apiSaveKoreksiTransaksi_(ss, payload) {
   const items = Array.isArray(payload.items) ? payload.items : [];
 
   if (!targetDate) throw new Error('Tanggal koreksi wajib dipilih.');
+  assertFinanceDateOpen_(ss, targetDate, 'Koreksi transaksi');
   if (!alasan) throw new Error('Alasan koreksi wajib diisi.');
   if (!items.length) throw new Error('Tidak ada data koreksi yang dikirim.');
 
@@ -3138,6 +3680,7 @@ function apiAddBarangMasuk_(ss, payload) {
   // saat payload dari web kosong/berbeda penamaan.
   const statusBayar = normalizeStatusBayarApi_(payload);
   const tanggal = parseDateInput_(payload.tanggal) || todayDate_();
+  assertFinanceDateOpen_(ss, tanggal, 'Barang masuk');
 
   items.forEach(item => {
     const row = getNextEmptyRow_(sh, CABE_START_ROW, 4);
@@ -3160,6 +3703,7 @@ function apiAddBarangTerjual_(ss, payload) {
   if (!items.length) throw new Error('Items barang terjual kosong.');
 
   const tanggal = parseDateInput_(payload.tanggal) || todayDate_();
+  assertFinanceDateOpen_(ss, tanggal, 'Barang terjual');
 
   items.forEach(item => {
     const row = getNextEmptyRow_(sh, CABE_START_ROW, 4);
@@ -3224,12 +3768,14 @@ function apiAddStokOpname_(ss, payload) {
   const stokSistemWeb = parseNumber_(payload.stokSistem);
   let hppWeb = parseNumber_(payload.hpp || payload.hppKg || payload.hargaKg || payload.hargaPokok);
   const petugas = String(payload.petugas || '').trim();
+  const tanggalOpname = parseDateInput_(payload.tanggal) || todayDate_();
+  assertFinanceDateOpen_(ss, tanggalOpname, 'Stok opname');
   if (!namaBarang && !kodeBarang) throw new Error('Barang wajib dipilih.');
   if (stokFisik < 0) throw new Error('Stok fisik tidak boleh kurang dari 0.');
   if (!petugas) throw new Error('Nama petugas wajib diisi.');
 
   const row = getNextEmptyRow_(sh, CABE_START_ROW, 4);
-  sh.getRange(row, 2).setValue(parseDateInput_(payload.tanggal) || todayDate_());
+  sh.getRange(row, 2).setValue(tanggalOpname);
   if (kodeBarang) sh.getRange(row, 3).setValue(kodeBarang);
   if (namaBarang) sh.getRange(row, 4).setValue(namaBarang);
 
@@ -3265,6 +3811,8 @@ function apiAddBayarHutang_(ss, payload) {
   const noNota = String(payload.noNota || payload.nota || payload.noNotaHutang || '').trim();
   const jumlahBayar = parseNumber_(payload.jumlahBayar);
   const metodeBayar = String(payload.metodeBayar || payload.metode || 'TRANSFER').trim().toUpperCase();
+  const tanggalBayar = parseDateInput_(payload.tanggalBayar) || todayDate_();
+  assertFinanceDateOpen_(ss, tanggalBayar, 'Pembayaran hutang');
 
   if (!noNota) throw new Error('No Nota hutang wajib dipilih.');
   if (jumlahBayar <= 0) throw new Error('Jumlah bayar wajib lebih dari 0.');
@@ -3279,7 +3827,7 @@ function apiAddBayarHutang_(ss, payload) {
   }
 
   const row = getNextEmptyRow_(sh, CABE_START_ROW, 3);
-  sh.getRange(row, 2).setValue(parseDateInput_(payload.tanggalBayar) || todayDate_());
+  sh.getRange(row, 2).setValue(tanggalBayar);
   sh.getRange(row, 3).setValue(debt.supplier);
   sh.getRange(row, 4).setValue(noNota);
   sh.getRange(row, 5).setValue(parseNumber_(debt.sisaHutang));
@@ -3364,6 +3912,7 @@ function apiAddPengeluaran_(ss, payload) {
   if (!sh) throw new Error('Sheet PENGELUARAN tidak ditemukan. Jalankan setupCABE() dulu.');
 
   const tanggal = parseDateInput_(payload.tanggal || payload.tanggalPengeluaran) || todayDate_();
+  assertFinanceDateOpen_(ss, tanggal, 'Pengeluaran');
   const kategori = String(payload.kategori || payload.kategoriPengeluaran || '').trim();
   const jumlah = parseNumber_(payload.jumlah || payload.nominal || payload.total);
   const metodeBayar = String(payload.metodeBayar || payload.metode || 'CASH').trim().toUpperCase();
@@ -3401,6 +3950,9 @@ function apiUpdatePengeluaran_(ss, payload) {
   const keterangan = String(payload.keterangan || payload.catatan || '').trim();
 
   if (!tanggal) throw new Error('Tanggal pengeluaran tidak valid.');
+  const tanggalLama = parseDateInput_(sh.getRange(row, 2).getValue());
+  assertFinanceDateOpen_(ss, tanggalLama, 'Edit pengeluaran');
+  assertFinanceDateOpen_(ss, tanggal, 'Edit pengeluaran');
   if (!kategori) throw new Error('Kategori pengeluaran wajib diisi.');
   if (jumlah <= 0) throw new Error('Jumlah pengeluaran wajib lebih dari 0.');
   if (['CASH', 'TRANSFER', 'QRIS'].indexOf(metodeBayar) === -1) {
@@ -3432,6 +3984,8 @@ function apiDeletePengeluaran_(ss, payload) {
   const row = findPengeluaranRowById_(sh, id);
   if (!row) throw new Error('Data pengeluaran tidak ditemukan: ' + id);
 
+  const tanggalLama = parseDateInput_(sh.getRange(row, 2).getValue());
+  assertFinanceDateOpen_(ss, tanggalLama, 'Hapus pengeluaran');
   const kategori = String(sh.getRange(row, 3).getValue() || 'Pengeluaran').trim();
   const jumlah = parseNumber_(sh.getRange(row, 4).getValue());
   sh.getRange(row, 1, 1, CABE_HEADERS[CABE_SHEETS.PENGELUARAN].length).clearContent();
@@ -3448,6 +4002,7 @@ function apiUpdateCashflowFlag_(ss, payload, flagType) {
   const key = payload.key || payload.id || payload.tanggal || payload.date || '';
   const targetDate = parseDateInput_(key);
   if (!targetDate) throw new Error('Tanggal cashflow tidak valid: ' + key);
+  assertFinanceDateOpen_(ss, targetDate, 'Perubahan status Cashflow');
 
   const sh = ss.getSheetByName(CABE_SHEETS.CASHFLOW);
   if (!sh) throw new Error('Sheet CASHFLOW BISNIS tidak ditemukan.');
@@ -3860,6 +4415,9 @@ function setColumnWidths_(sh, name) {
     'CASHFLOW BISNIS': [110, 120, 120, 120, 120, 120, 120, 55, 55],
     'AKSES PERANGKAT': [150, 160, 180, 230, 360, 110, 100, 150, 150, 260],
     'KOREKSI TRANSAKSI': [170, 150, 150, 120, 180, 110, 180, 320, 320, 110, 260, 120],
+    'MUTASI MODAL': [180, 110, 170, 130, 110, 260, 150, 150],
+    'REKONSILIASI BANK': [190, 110, 140, 150, 130, 260, 150, 150],
+    'TUTUP PERIODE': [160, 100, 150, 130, 140, 130, 130, 130, 130, 150, 130, 140, 140, 150, 130, 130, 140, 160, 260, 100, 150],
     'SETUP': [160, 180, 280]
   };
   const arr = widths[name] || [];
